@@ -1,4 +1,5 @@
 # ewebkit
+
 svn checkout -r HEAD --depth=empty https://svn.webkit.org/repository/webkit/trunk/ ewebkit
 svn up ewebkit/CMakeLists.txt ewebkit/Source ewebkit/ChangeLog
 sed -i '/-Werror/d' ewebkit/Source/cmake/WebKitHelpers.cmake

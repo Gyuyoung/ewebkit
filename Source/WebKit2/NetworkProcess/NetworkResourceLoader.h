@@ -32,7 +32,6 @@
 #include "NetworkResourceLoadParameters.h"
 #include "ShareableResource.h"
 #include <WebCore/Timer.h>
-#include <wtf/Optional.h>
 
 namespace WebCore {
 class BlobDataFileReference;
@@ -67,7 +66,7 @@ public:
     void setDefersLoading(bool);
 
     // Message handlers.
-    void didReceiveNetworkResourceLoaderMessage(IPC::Connection&, IPC::MessageDecoder&);
+    void didReceiveNetworkResourceLoaderMessage(IPC::Connection&, IPC::Decoder&);
 
 #if USE(PROTECTION_SPACE_AUTH_CALLBACK)
     void continueCanAuthenticateAgainstProtectionSpace(bool);
@@ -82,12 +81,15 @@ public:
     ResourceLoadIdentifier identifier() const { return m_parameters.identifier; }
     uint64_t frameID() const { return m_parameters.webFrameID; }
     uint64_t pageID() const { return m_parameters.webPageID; }
+    bool isBecomingDownload() const;
 
     struct SynchronousLoadData;
 
     // NetworkLoadClient.
     void didSendData(unsigned long long bytesSent, unsigned long long totalBytesToBeSent) override;
+#if USE(PROTECTION_SPACE_AUTH_CALLBACK)
     void canAuthenticateAgainstProtectionSpaceAsync(const WebCore::ProtectionSpace&) override;
+#endif
     bool isSynchronous() const override;
     void willSendRedirectedRequest(WebCore::ResourceRequest&&, WebCore::ResourceRequest&& redirectRequest, WebCore::ResourceResponse&&) override;
     ShouldContinueDidReceiveResponse didReceiveResponse(WebCore::ResourceResponse&&) override;
@@ -130,12 +132,10 @@ private:
 
     void startBufferingTimerIfNeeded();
     void bufferingTimerFired();
-    bool sendBufferMaybeAborting(WebCore::SharedBuffer&, size_t encodedDataLength);
+    void sendBuffer(WebCore::SharedBuffer&, size_t encodedDataLength);
 
     void consumeSandboxExtensions();
     void invalidateSandboxExtensions();
-
-    template<typename T> bool sendAbortingOnFailure(T&& message, unsigned messageSendFlags = 0);
 
     const NetworkResourceLoadParameters m_parameters;
 
@@ -156,6 +156,7 @@ private:
     bool m_didConvertToDownload { false };
     bool m_didConsumeSandboxExtensions { false };
     bool m_defersLoading { false };
+    bool m_hasReceivedData { false };
 
     WebCore::Timer m_bufferingTimer;
 #if ENABLE(NETWORK_CACHE)

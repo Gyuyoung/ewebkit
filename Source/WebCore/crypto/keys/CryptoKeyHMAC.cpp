@@ -28,7 +28,6 @@
 
 #if ENABLE(SUBTLE_CRYPTO)
 
-#include "CryptoAlgorithmDescriptionBuilder.h"
 #include "CryptoAlgorithmRegistry.h"
 #include "CryptoKeyDataOctetSequence.h"
 #include <wtf/text/WTFString.h>
@@ -46,36 +45,31 @@ CryptoKeyHMAC::~CryptoKeyHMAC()
 {
 }
 
-RefPtr<CryptoKeyHMAC> CryptoKeyHMAC::generate(size_t lengthBytes, CryptoAlgorithmIdentifier hash, bool extractable, CryptoKeyUsage usages)
+RefPtr<CryptoKeyHMAC> CryptoKeyHMAC::generate(size_t lengthBits, CryptoAlgorithmIdentifier hash, bool extractable, CryptoKeyUsage usages)
 {
-    if (!lengthBytes) {
+    if (!lengthBits) {
         switch (hash) {
         case CryptoAlgorithmIdentifier::SHA_1:
         case CryptoAlgorithmIdentifier::SHA_224:
         case CryptoAlgorithmIdentifier::SHA_256:
-            lengthBytes = 64;
+            lengthBits = 512;
             break;
         case CryptoAlgorithmIdentifier::SHA_384:
         case CryptoAlgorithmIdentifier::SHA_512:
-            lengthBytes = 128;
+            lengthBits = 1024;
             break;
         default:
             return nullptr;
         }
     }
 
-    return adoptRef(new CryptoKeyHMAC(randomData(lengthBytes), hash, extractable, usages));
+    return adoptRef(new CryptoKeyHMAC(randomData(lengthBits), hash, extractable, usages));
 }
 
-void CryptoKeyHMAC::buildAlgorithmDescription(CryptoAlgorithmDescriptionBuilder& builder) const
+std::unique_ptr<KeyAlgorithm> CryptoKeyHMAC::buildAlgorithm() const
 {
-    CryptoKey::buildAlgorithmDescription(builder);
-
-    auto hashDescriptionBuilder = builder.createEmptyClone();
-    hashDescriptionBuilder->add("name", CryptoAlgorithmRegistry::singleton().nameForIdentifier(m_hash));
-    builder.add("hash", *hashDescriptionBuilder);
-
-    builder.add("length", m_key.size());
+    return std::make_unique<HmacKeyAlgorithm>(CryptoAlgorithmRegistry::singleton().nameForIdentifier(algorithmIdentifier()),
+        CryptoAlgorithmRegistry::singleton().nameForIdentifier(m_hash), m_key.size());
 }
 
 std::unique_ptr<CryptoKeyData> CryptoKeyHMAC::exportData() const

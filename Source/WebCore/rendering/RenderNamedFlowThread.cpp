@@ -101,7 +101,9 @@ RenderElement* RenderNamedFlowThread::nextRendererForElement(Element& element) c
 {
     for (auto& child : m_flowThreadChildList) {
         ASSERT(!child->isAnonymous());
-        unsigned short position = element.compareDocumentPosition(child->element());
+        ASSERT_WITH_MESSAGE(child->element(), "Can only be null for anonymous renderers");
+
+        unsigned short position = element.compareDocumentPosition(*child->element());
         if (position & Node::DOCUMENT_POSITION_FOLLOWING)
             return child;
     }
@@ -159,7 +161,7 @@ static bool compareRenderNamedFlowFragments(const RenderNamedFlowFragment* first
 
     // If the regions belong to different nodes, compare their position in the DOM.
     if (firstFragment->generatingElement() != secondFragment->generatingElement()) {
-        unsigned short position = firstFragment->generatingElement()->compareDocumentPosition(secondFragment->generatingElement());
+        unsigned short position = firstFragment->generatingElement()->compareDocumentPosition(*secondFragment->generatingElement());
 
         // If the second region is contained in the first one, the first region is "less" if it's :before.
         if (position & Node::DOCUMENT_POSITION_CONTAINED_BY) {
@@ -503,7 +505,7 @@ void RenderNamedFlowThread::registerNamedFlowContentElement(Element& contentElem
 
     // Find the first content node following the new content node.
     for (auto& element : m_contentElements) {
-        unsigned short position = contentElement.compareDocumentPosition(element);
+        unsigned short position = contentElement.compareDocumentPosition(*element);
         if (position & Node::DOCUMENT_POSITION_FOLLOWING) {
             m_contentElements.insertBefore(element, &contentElement);
             InspectorInstrumentation::didRegisterNamedFlowContentElement(document(), namedFlow(), contentElement, element);
@@ -810,7 +812,7 @@ void RenderNamedFlowThread::checkRegionsWithStyling()
     m_hasRegionsWithStyling = hasRegionsWithStyling;
 }
 
-void RenderNamedFlowThread::clearRenderObjectCustomStyle(const RenderObject* object)
+void RenderNamedFlowThread::clearRenderObjectCustomStyle(const RenderElement* object)
 {
     // Clear the styles for the object in the regions.
     // FIXME: Region styling is not computed only for the region range of the object so this is why we need to walk the whole chain.
@@ -818,7 +820,7 @@ void RenderNamedFlowThread::clearRenderObjectCustomStyle(const RenderObject* obj
         downcast<RenderNamedFlowFragment>(*region).clearObjectStyleInRegion(object);
 }
 
-void RenderNamedFlowThread::removeFlowChildInfo(RenderObject* child)
+void RenderNamedFlowThread::removeFlowChildInfo(RenderElement* child)
 {
     RenderFlowThread::removeFlowChildInfo(child);
     clearRenderObjectCustomStyle(child);

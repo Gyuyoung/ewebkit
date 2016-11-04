@@ -37,6 +37,7 @@ namespace WebCore {
 
 class AudioSourceProvider;
 class GraphicsContext;
+class MediaSample;
 class MediaSourceSettings;
 class RealtimeMediaSourceCapabilities;
 
@@ -50,6 +51,7 @@ public:
         virtual void trackMutedChanged(MediaStreamTrackPrivate&) = 0;
         virtual void trackSettingsChanged(MediaStreamTrackPrivate&) = 0;
         virtual void trackEnabledChanged(MediaStreamTrackPrivate&) = 0;
+        virtual void sampleBufferUpdated(MediaStreamTrackPrivate&, MediaSample&) { };
     };
     
     static RefPtr<MediaStreamTrackPrivate> create(RefPtr<RealtimeMediaSource>&&);
@@ -89,7 +91,7 @@ public:
     RefPtr<RealtimeMediaSourceCapabilities> capabilities() const;
 
     RefPtr<MediaConstraints> constraints() const;
-    void applyConstraints(const MediaConstraints&);
+    void applyConstraints(const MediaConstraints&, RealtimeMediaSource::SuccessHandler, RealtimeMediaSource::FailureHandler);
 
     AudioSourceProvider* audioSourceProvider();
 
@@ -104,6 +106,7 @@ private:
     void sourceMutedChanged() final;
     void sourceSettingsChanged() final;
     bool preventSourceFromStopping() final;
+    void sourceHasMoreMediaData(MediaSample&) final;
 
     Vector<Observer*> m_observers;
     RefPtr<RealtimeMediaSource> m_source;

@@ -101,6 +101,11 @@ String WorkerRunLoop::defaultMode()
     return String();
 }
 
+String WorkerRunLoop::debuggerMode()
+{
+    return ASCIILiteral("debugger");
+}
+
 class RunLoopSetup {
     WTF_MAKE_NONCOPYABLE(RunLoopSetup);
 public:
@@ -116,7 +121,7 @@ public:
     {
         m_runLoop.m_nestedCount--;
         if (!m_runLoop.m_nestedCount)
-            threadGlobalData().threadTimers().setSharedTimer(0);
+            threadGlobalData().threadTimers().setSharedTimer(nullptr);
     }
 private:
     WorkerRunLoop& m_runLoop;
@@ -168,7 +173,11 @@ MessageQueueWaitResult WorkerRunLoop::runInMode(WorkerGlobalScope* context, cons
             absoluteTime = deadline;
     }
     MessageQueueWaitResult result;
+    if (WorkerScriptController* script = context->script())
+        script->releaseHeapAccess();
     auto task = m_messageQueue.waitForMessageFilteredWithTimeout(result, predicate, absoluteTime);
+    if (WorkerScriptController* script = context->script())
+        script->acquireHeapAccess();
 
     // If the context is closing, don't execute any further JavaScript tasks (per section 4.1.1 of the Web Workers spec).  However, there may be implementation cleanup tasks in the queue, so keep running through it.
 

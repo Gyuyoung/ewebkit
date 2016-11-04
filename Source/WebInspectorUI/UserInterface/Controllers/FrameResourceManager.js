@@ -236,7 +236,7 @@ WebInspector.FrameResourceManager = class FrameResourceManager extends WebInspec
         var response = cachedResourcePayload.response;
         var resource = this._addNewResourceToFrame(requestIdentifier, frameIdentifier, loaderIdentifier, cachedResourcePayload.url, cachedResourcePayload.type, "GET", null, null, elapsedTime, null, null, initiatorSourceCodeLocation);
         resource.markAsCached();
-        resource.updateForResponse(cachedResourcePayload.url, response.mimeType, cachedResourcePayload.type, response.headers, response.status, response.statusText, elapsedTime);
+        resource.updateForResponse(cachedResourcePayload.url, response.mimeType, cachedResourcePayload.type, response.headers, response.status, response.statusText, elapsedTime, response.timing);
         resource.increaseSize(cachedResourcePayload.bodySize, elapsedTime);
         resource.increaseTransferSize(cachedResourcePayload.bodySize);
         resource.markAsFinished(elapsedTime);
@@ -288,7 +288,7 @@ WebInspector.FrameResourceManager = class FrameResourceManager extends WebInspec
         if (response.fromDiskCache)
             resource.markAsCached();
 
-        resource.updateForResponse(response.url, response.mimeType, type, response.headers, response.status, response.statusText, elapsedTime);
+        resource.updateForResponse(response.url, response.mimeType, type, response.headers, response.status, response.statusText, elapsedTime, response.timing);
     }
 
     resourceRequestDidReceiveData(requestIdentifier, dataLength, encodedDataLength, timestamp)
@@ -372,7 +372,7 @@ WebInspector.FrameResourceManager = class FrameResourceManager extends WebInspec
             return;
 
         var displayName = contextPayload.name || frame.mainResource.displayName;
-        var executionContext = new WebInspector.ExecutionContext(contextPayload.id, displayName, contextPayload.isPageContext, frame);
+        var executionContext = new WebInspector.ExecutionContext(WebInspector.mainTarget, contextPayload.id, displayName, contextPayload.isPageContext, frame);
         frame.addExecutionContext(executionContext);
     }
 
@@ -485,7 +485,7 @@ WebInspector.FrameResourceManager = class FrameResourceManager extends WebInspec
 
         var sourceCode = WebInspector.frameResourceManager.resourceForURL(url);
         if (!sourceCode)
-            sourceCode = WebInspector.debuggerManager.scriptsForURL(url)[0];
+            sourceCode = WebInspector.debuggerManager.scriptsForURL(url, WebInspector.mainTarget)[0];
 
         if (!sourceCode)
             return null;

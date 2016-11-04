@@ -41,11 +41,9 @@ private:
     friend NeverDestroyed<MockRealtimeMediaSourceCenter>;
     MockRealtimeMediaSourceCenter();
 
-    void validateRequestConstraints(MediaStreamCreationClient*, RefPtr<MediaConstraints>& audioConstraints, RefPtr<MediaConstraints>& videoConstraints) override;
-    void createMediaStream(PassRefPtr<MediaStreamCreationClient>, PassRefPtr<MediaConstraints> audioConstraints, PassRefPtr<MediaConstraints> videoConstraints) override;
-    bool getMediaStreamTrackSources(PassRefPtr<MediaStreamTrackSourcesRequestClient>) override;
-    void createMediaStream(MediaStreamCreationClient*, const String& audioDeviceID, const String& videoDeviceID) override;
-    RefPtr<TrackSourceInfo> sourceWithUID(const String&, RealtimeMediaSource::Type, MediaConstraints*) override;
+    void validateRequestConstraints(ValidConstraintsHandler validHandler, InvalidConstraintsHandler invalidHandler, MediaConstraints& audioConstraints, MediaConstraints& videoConstraints) override;
+    Vector<CaptureDevice> getMediaStreamDevices() override;
+    void createMediaStream(NewMediaStreamHandler, const String& audioDeviceID, const String& videoDeviceID) override;
 };
 
 }

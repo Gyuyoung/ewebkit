@@ -28,15 +28,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef EventTarget_h
-#define EventTarget_h
+#pragma once
 
 #include "EventListenerMap.h"
 #include "EventTargetInterfaces.h"
 #include "ScriptWrappable.h"
 #include <memory>
 #include <wtf/Forward.h>
-#include <wtf/HashMap.h>
+#include <wtf/Variant.h>
 
 namespace WTF {
 class AtomicString;
@@ -97,7 +96,7 @@ public:
     ~EventTargetData();
 
     EventListenerMap eventListenerMap;
-    std::unique_ptr<FiringEventIteratorVector> firingEventIterators;
+    bool isFiringEventListeners { false };
 };
 
 enum EventTargetInterface {
@@ -139,21 +138,21 @@ public:
         bool once;
     };
 
-    void addEventListenerForBindings(const AtomicString& eventType, RefPtr<EventListener>&&, bool useCapture);
-    void removeEventListenerForBindings(const AtomicString& eventType, RefPtr<EventListener>&&, bool useCapture);
-    void addEventListenerForBindings(const AtomicString& eventType, RefPtr<EventListener>&&, const AddEventListenerOptions&);
-    void removeEventListenerForBindings(const AtomicString& eventType, RefPtr<EventListener>&&, const ListenerOptions&);
+    using AddEventListenerOptionsOrBoolean = WTF::Variant<AddEventListenerOptions, bool>;
+    WEBCORE_EXPORT void addEventListenerForBindings(const AtomicString& eventType, RefPtr<EventListener>&&, AddEventListenerOptionsOrBoolean&&);
+
+    using ListenerOptionsOrBoolean = WTF::Variant<ListenerOptions, bool>;
+    WEBCORE_EXPORT void removeEventListenerForBindings(const AtomicString& eventType, RefPtr<EventListener>&&, ListenerOptionsOrBoolean&&);
     virtual bool addEventListener(const AtomicString& eventType, Ref<EventListener>&&, const AddEventListenerOptions& = { });
     virtual bool removeEventListener(const AtomicString& eventType, EventListener&, const ListenerOptions&);
 
     virtual void removeAllEventListeners();
     virtual bool dispatchEvent(Event&);
-    bool dispatchEventForBindings(Event*, ExceptionCode&); // DOM API
+    WEBCORE_EXPORT bool dispatchEventForBindings(Event&, ExceptionCode&); // DOM API
     virtual void uncaughtExceptionInEventHandler();
 
     // Used for legacy "onEvent" attribute APIs.
     bool setAttributeEventListener(const AtomicString& eventType, RefPtr<EventListener>&&);
-    bool clearAttributeEventListener(const AtomicString& eventType);
     EventListener* getAttributeEventListener(const AtomicString& eventType);
 
     bool hasEventListeners() const;
@@ -182,7 +181,7 @@ private:
     virtual void refEventTarget() = 0;
     virtual void derefEventTarget() = 0;
     
-    void fireEventListeners(Event&, EventTargetData*, EventListenerVector&);
+    void fireEventListeners(Event&, EventListenerVector);
 
     friend class EventListenerIterator;
 };
@@ -207,7 +206,7 @@ inline bool EventTarget::isFiringEventListeners()
     EventTargetData* d = eventTargetData();
     if (!d)
         return false;
-    return d->firingEventIterators && !d->firingEventIterators->isEmpty();
+    return d->isFiringEventListeners;
 }
 
 inline bool EventTarget::hasEventListeners() const
@@ -234,16 +233,4 @@ inline bool EventTarget::hasCapturingEventListeners(const AtomicString& eventTyp
     return d->eventListenerMap.containsCapturing(eventType);
 }
 
-inline void EventTarget::addEventListenerForBindings(const AtomicString& eventType, RefPtr<EventListener>&& listener, bool useCapture)
-{
-    addEventListenerForBindings(eventType, WTFMove(listener), AddEventListenerOptions(useCapture));
-}
-
-inline void EventTarget::removeEventListenerForBindings(const AtomicString& eventType, RefPtr<EventListener>&& listener, bool useCapture)
-{
-    removeEventListenerForBindings(eventType, WTFMove(listener), ListenerOptions(useCapture));
-}
-
 } // namespace WebCore
-
-#endif // EventTarget_h

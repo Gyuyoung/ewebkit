@@ -23,10 +23,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
-#ifndef MacroAssembler_h
-#define MacroAssembler_h
+#pragma once
 
 #if ENABLE(ASSEMBLER)
+
+#include "JSCJSValue.h"
 
 #if CPU(ARM_THUMB2)
 #include "MacroAssemblerARMv7.h"
@@ -119,7 +120,7 @@ public:
     using MacroAssemblerBase::and32;
     using MacroAssemblerBase::branchAdd32;
     using MacroAssemblerBase::branchMul32;
-#if CPU(ARM64) || CPU(ARM_THUMB2) || CPU(X86_64)
+#if CPU(ARM64) || CPU(ARM_THUMB2) || CPU(ARM_TRADITIONAL) || CPU(X86_64)
     using MacroAssemblerBase::branchPtr;
 #endif
     using MacroAssemblerBase::branchSub32;
@@ -372,6 +373,11 @@ public:
         branchPtr(cond, op1, imm).linkTo(target, this);
     }
 
+    Jump branch32(RelationalCondition cond, RegisterID left, AbsoluteAddress right)
+    {
+        return branch32(flip(cond), right, left);
+    }
+
     void branch32(RelationalCondition cond, RegisterID op1, RegisterID op2, Label target)
     {
         branch32(cond, op1, op2).linkTo(target, this);
@@ -492,6 +498,7 @@ public:
 
     // B3 has additional pseudo-opcodes for returning, when it wants to signal that the return
     // consumes some register in some way.
+    void retVoid() { ret(); }
     void ret32(RegisterID) { ret(); }
     void ret64(RegisterID) { ret(); }
     void retFloat(FPRegisterID) { ret(); }
@@ -790,7 +797,8 @@ public:
     using MacroAssemblerBase::branchTest8;
     Jump branchTest8(ResultCondition cond, ExtendedAddress address, TrustedImm32 mask = TrustedImm32(-1))
     {
-        return MacroAssemblerBase::branchTest8(cond, Address(address.base, address.offset), mask);
+        TrustedImm32 mask8(static_cast<int8_t>(mask.m_value));
+        return MacroAssemblerBase::branchTest8(cond, Address(address.base, address.offset), mask8);
     }
 
 #else // !CPU(X86_64)
@@ -1350,10 +1358,17 @@ public:
     }
 #endif
 
-    void lea(Address address, RegisterID dest)
+    void lea32(Address address, RegisterID dest)
     {
-        addPtr(TrustedImm32(address.offset), address.base, dest);
+        add32(TrustedImm32(address.offset), address.base, dest);
     }
+
+#if CPU(X86_64) || CPU(ARM64)
+    void lea64(Address address, RegisterID dest)
+    {
+        add64(TrustedImm32(address.offset), address.base, dest);
+    }
+#endif // CPU(X86_64) || CPU(ARM64)
 
     bool shouldBlind(Imm32 imm)
     {
@@ -1815,5 +1830,3 @@ public:
 } // namespace JSC
 
 #endif // ENABLE(ASSEMBLER)
-
-#endif // MacroAssembler_h

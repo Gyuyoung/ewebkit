@@ -33,65 +33,52 @@
     readonly attribute boolean collapsed;
     readonly attribute Node commonAncestorContainer;
 
-    [ObjCLegacyUnnamedParameters, RaisesException] void setStart(Node refNode, optional long offset = 0);
-    [ObjCLegacyUnnamedParameters, RaisesException] void setEnd(Node refNode, optional long offset = 0);
-    [RaisesException] void setStartBefore(Node refNode);
-    [RaisesException] void setStartAfter(Node refNode);
-    [RaisesException] void setEndBefore(Node refNode);
-    [RaisesException] void setEndAfter(Node refNode);
+    [MayThrowLegacyException] void setStart(Node refNode, unsigned long offset);
+    [MayThrowLegacyException] void setEnd(Node refNode, unsigned long offset);
+
+    [MayThrowLegacyException] void setStartBefore(Node refNode);
+    [MayThrowLegacyException] void setStartAfter(Node refNode);
+    [MayThrowLegacyException] void setEndBefore(Node refNode);
+    [MayThrowLegacyException] void setEndAfter(Node refNode);
     void collapse(optional boolean toStart = false);
-    [RaisesException] void selectNode(Node refNode);
-    [RaisesException] void selectNodeContents(Node refNode);
+    // FIXME: Using "undefined" as default parameter value is wrong.
+    [MayThrowLegacyException] void expand(optional DOMString unit = "undefined");
+    [MayThrowLegacyException] void selectNode(Node refNode);
+    [MayThrowLegacyException] void selectNodeContents(Node refNode);
 
     // CompareHow
     const unsigned short START_TO_START = 0;
-    const unsigned short START_TO_END   = 1;
-    const unsigned short END_TO_END     = 2;
-    const unsigned short END_TO_START   = 3;
+    const unsigned short START_TO_END = 1;
+    const unsigned short END_TO_END = 2;
+    const unsigned short END_TO_START = 3;
 
-    [ObjCLegacyUnnamedParameters, RaisesException, ImplementedAs=compareBoundaryPointsForBindings] short compareBoundaryPoints(optional unsigned short how = 0, Range sourceRange);
+    [MayThrowLegacyException, ImplementedAs=compareBoundaryPointsForBindings] short compareBoundaryPoints(unsigned short how, Range sourceRange);
 
-    [RaisesException] void deleteContents();
-    [RaisesException, NewObject] DocumentFragment extractContents();
-    [RaisesException, NewObject] DocumentFragment cloneContents();
-    [RaisesException] void insertNode(Node newNode);
-    [RaisesException] void surroundContents(Node newParent);
+    [CEReactions, MayThrowLegacyException] void deleteContents();
+    [CEReactions, MayThrowLegacyException, NewObject] DocumentFragment extractContents();
+    [CEReactions, MayThrowLegacyException, NewObject] DocumentFragment cloneContents();
+    [CEReactions, MayThrowLegacyException] void insertNode(Node newNode);
+    [CEReactions, MayThrowLegacyException] void surroundContents(Node newParent);
     [NewObject] Range cloneRange();
     DOMString toString();
 
     void detach();
 
-#if defined(LANGUAGE_JAVASCRIPT) || LANGUAGE_JAVASCRIPT
-    // CSSOM View Module API extensions
-
     ClientRectList getClientRects();
     ClientRect getBoundingClientRect();
-#endif
 
-    // extensions
+    [CEReactions, MayThrowLegacyException, NewObject] DocumentFragment createContextualFragment(DOMString html);
 
-    // FIXME: Using "undefined" as default parameter value is wrong.
-    [RaisesException] DocumentFragment createContextualFragment(optional DOMString html = "undefined");
-
-    // WebKit extensions
-
-    [RaisesException] short compareNode(Node refNode);
+    [MayThrowLegacyException] short compareNode(Node refNode);
 
     // CompareResults
-    const unsigned short NODE_BEFORE           = 0;
-    const unsigned short NODE_AFTER            = 1;
+    const unsigned short NODE_BEFORE = 0;
+    const unsigned short NODE_AFTER = 1;
     const unsigned short NODE_BEFORE_AND_AFTER = 2;
-    const unsigned short NODE_INSIDE           = 3;
+    const unsigned short NODE_INSIDE = 3;
 
-    [RaisesException] short comparePoint(Node refNode, optional long offset = 0);
-    [RaisesException] boolean intersectsNode(Node refNode);
-    [RaisesException] boolean isPointInRange(Node refNode, optional long offset = 0);
+    [MayThrowLegacyException] boolean intersectsNode(Node refNode);
 
-    // FIXME: Using "undefined" as default parameter value is wrong.
-    [RaisesException] void expand(optional DOMString unit = "undefined");
-
-#if !defined(LANGUAGE_JAVASCRIPT) || !LANGUAGE_JAVASCRIPT
-    readonly attribute DOMString text;
-#endif
+    [MayThrowLegacyException] short comparePoint(Node refNode, unsigned long offset);
+    [MayThrowLegacyException] boolean isPointInRange(Node refNode, unsigned long offset);
 };
-

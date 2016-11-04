@@ -18,8 +18,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef SVGTransformList_h
-#define SVGTransformList_h
+#pragma once
 
 #include "SVGPropertyTraits.h"
 #include "SVGTransform.h"
@@ -27,27 +26,21 @@
 
 namespace WebCore {
 
-class SVGTransformList : public Vector<SVGTransform, 1> {
+class SVGTransformList final : public Vector<SVGTransform, 1> {
 public:
-    SVGTransformList() { }
-
     SVGTransform createSVGTransformFromMatrix(const SVGMatrix&) const;
     SVGTransform consolidate();
 
-    // Internal use only
     bool concatenate(AffineTransform& result) const;
  
     String valueAsString() const;
     void parse(const String&);
 };
 
-template<>
-struct SVGPropertyTraits<SVGTransformList> {
+template<> struct SVGPropertyTraits<SVGTransformList> {
     static SVGTransformList initialValue() { return SVGTransformList(); }
     static String toString(const SVGTransformList& type) { return type.valueAsString(); }
     typedef SVGTransform ListItemType;
 };
 
 } // namespace WebCore
-
-#endif // SVGTransformList_h

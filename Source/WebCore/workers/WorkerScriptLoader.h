@@ -22,11 +22,9 @@
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
- *
  */
 
-#ifndef WorkerScriptLoader_h
-#define WorkerScriptLoader_h
+#pragma once
 
 #include "URL.h"
 #include "ResourceRequest.h"
@@ -34,8 +32,8 @@
 #include "ThreadableLoaderClient.h"
 #include <memory>
 #include <wtf/FastMalloc.h>
-#include <wtf/PassRefPtr.h>
 #include <wtf/RefCounted.h>
+#include <wtf/RefPtr.h>
 #include <wtf/text/StringBuilder.h>
 
 namespace WebCore {
@@ -54,8 +52,8 @@ namespace WebCore {
             return adoptRef(*new WorkerScriptLoader);
         }
 
-        void loadSynchronously(ScriptExecutionContext*, const URL&, CrossOriginRequestPolicy, ContentSecurityPolicyEnforcement);
-        void loadAsynchronously(ScriptExecutionContext*, const URL&, CrossOriginRequestPolicy, ContentSecurityPolicyEnforcement, WorkerScriptLoaderClient*);
+        void loadSynchronously(ScriptExecutionContext*, const URL&, FetchOptions::Mode, ContentSecurityPolicyEnforcement);
+        void loadAsynchronously(ScriptExecutionContext*, const URL&, FetchOptions::Mode, ContentSecurityPolicyEnforcement, WorkerScriptLoaderClient*);
 
         void notifyError();
 
@@ -92,5 +90,3 @@ namespace WebCore {
     };
 
 } // namespace WebCore
-
-#endif // WorkerScriptLoader_h

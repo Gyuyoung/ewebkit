@@ -42,7 +42,6 @@
 #include "RenderText.h"
 #include "RenderTheme.h"
 #include "RenderView.h"
-#include "Settings.h"
 #include "StyleResolver.h"
 #include "TextRun.h"
 #include <math.h>
@@ -219,13 +218,13 @@ void RenderMenuList::updateOptionsWidth()
                 optionWidth += minimumValueForLength(optionStyle->textIndent(), 0);
             if (!text.isEmpty()) {
                 const FontCascade& font = style().fontCascade();
-                TextRun run = RenderBlock::constructTextRun(text, style(), AllowTrailingExpansion | ForbidLeadingExpansion, DefaultTextRunFlags);
+                TextRun run = RenderBlock::constructTextRun(text, style());
                 optionWidth += font.width(run);
             }
             maxOptionWidth = std::max(maxOptionWidth, optionWidth);
         } else if (!text.isEmpty()) {
             const FontCascade& font = style().fontCascade();
-            TextRun run = RenderBlock::constructTextRun(text, style(), AllowTrailingExpansion | ForbidLeadingExpansion, DefaultTextRunFlags);
+            TextRun run = RenderBlock::constructTextRun(text, style());
             maxOptionWidth = std::max(maxOptionWidth, font.width(run));
         }
     }
@@ -469,7 +468,7 @@ String RenderMenuList::itemAccessibilityText(unsigned listIndex) const
     const Vector<HTMLElement*>& listItems = selectElement().listItems();
     if (listIndex >= listItems.size())
         return String();
-    return listItems[listIndex]->fastGetAttribute(aria_labelAttr);
+    return listItems[listIndex]->attributeWithoutSynchronization(aria_labelAttr);
 }
     
 String RenderMenuList::itemToolTip(unsigned listIndex) const
@@ -570,15 +569,12 @@ HostWindow* RenderMenuList::hostWindow() const
     return view().frameView().hostWindow();
 }
 
-PassRefPtr<Scrollbar> RenderMenuList::createScrollbar(ScrollableArea& scrollableArea, ScrollbarOrientation orientation, ScrollbarControlSize controlSize)
+Ref<Scrollbar> RenderMenuList::createScrollbar(ScrollableArea& scrollableArea, ScrollbarOrientation orientation, ScrollbarControlSize controlSize)
 {
-    RefPtr<Scrollbar> widget;
     bool hasCustomScrollbarStyle = style().hasPseudoStyle(SCROLLBAR);
     if (hasCustomScrollbarStyle)
-        widget = RenderScrollbar::createCustomScrollbar(scrollableArea, orientation, &selectElement());
-    else
-        widget = Scrollbar::createNativeScrollbar(scrollableArea, orientation, controlSize);
-    return WTFMove(widget);
+        return RenderScrollbar::createCustomScrollbar(scrollableArea, orientation, &selectElement());
+    return Scrollbar::createNativeScrollbar(scrollableArea, orientation, controlSize);
 }
 
 int RenderMenuList::clientInsetLeft() const

@@ -48,7 +48,6 @@
 #include "HTMLFormElement.h"
 #include "HTMLFrameElement.h"
 #include "HTMLIFrameElement.h"
-#include "HTMLInputElement.h"
 #include "HTMLNames.h"
 #include "HTMLSelectElement.h"
 #include "HitTestRequest.h"
@@ -1693,7 +1692,7 @@ void FrameSelection::paintCaret(GraphicsContext& context, const LayoutPoint& pai
 }
 
 #if ENABLE(TEXT_CARET)
-static inline bool disappearsIntoBackground(Color foreground, Color background)
+static inline bool disappearsIntoBackground(const Color& foreground, const Color& background)
 {
     return background.blend(foreground) == background;
 }
@@ -1983,7 +1982,7 @@ void FrameSelection::focusedOrActiveStateChanged()
     // RenderTheme::isFocused() check if the frame is active, we have to
     // update style and theme state that depended on those.
     if (Element* element = document->focusedElement()) {
-        element->setNeedsStyleRecalc();
+        element->invalidateStyleForSubtree();
         if (RenderObject* renderer = element->renderer())
             if (renderer && renderer->style().hasAppearance())
                 renderer->theme().stateChanged(*renderer, ControlStates::FocusState);
@@ -2088,8 +2087,11 @@ void FrameSelection::updateAppearance()
     // because we don't yet notify the FrameSelection of text removal.
     if (startPos.isNotNull() && endPos.isNotNull() && selection.visibleStart() != selection.visibleEnd()) {
         RenderObject* startRenderer = startPos.deprecatedNode()->renderer();
+        int startOffset = startPos.deprecatedEditingOffset();
         RenderObject* endRenderer = endPos.deprecatedNode()->renderer();
-        view->setSelection(startRenderer, startPos.deprecatedEditingOffset(), endRenderer, endPos.deprecatedEditingOffset());
+        int endOffset = endPos.deprecatedEditingOffset();
+        ASSERT(startOffset >= 0 && endOffset >= 0);
+        view->setSelection(startRenderer, startOffset, endRenderer, endOffset);
     }
 }
 
@@ -2098,7 +2100,7 @@ void FrameSelection::setCaretVisibility(CaretVisibility visibility)
     if (caretVisibility() == visibility)
         return;
 
-    // FIXME: We shouldn't trigger a synchrnously layout here.
+    // FIXME: We shouldn't trigger a synchronous layout here.
     if (m_frame)
         updateSelectionByUpdatingLayoutOrStyle(*m_frame);
 
@@ -2379,6 +2381,9 @@ void FrameSelection::setShouldShowBlockCursor(bool shouldShowBlockCursor)
 
 void FrameSelection::updateAppearanceAfterLayout()
 {
+    if (auto* client = m_frame->editor().client())
+        client->updateEditorStateAfterLayoutIfEditabilityChanged();
+
     setCaretRectNeedsUpdate();
     updateAndRevealSelection(AXTextStateChangeIntent());
     updateDataDetectorsForSelection();

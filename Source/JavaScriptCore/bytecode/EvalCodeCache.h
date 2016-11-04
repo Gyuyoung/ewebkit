@@ -26,10 +26,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef EvalCodeCache_h
-#define EvalCodeCache_h
+#pragma once
 
-#include "Executable.h"
+#include "EvalExecutable.h"
 #include "JSGlobalObject.h"
 #include "JSScope.h"
 #include "Options.h"
@@ -50,7 +49,7 @@ namespace JSC {
         public:
             CacheKey(const String& source, DerivedContextType derivedContextType, EvalContextType evalContextType, bool isArrowFunctionContext)
                 : m_source(source.impl())
-                , m_flags(SourceCodeType::EvalType, JSParserBuiltinMode::NotBuiltin, JSParserStrictMode::NotStrict, derivedContextType, evalContextType, isArrowFunctionContext)
+                , m_flags(SourceCodeType::EvalType, JSParserBuiltinMode::NotBuiltin, JSParserStrictMode::NotStrict, JSParserScriptMode::Classic, derivedContextType, evalContextType, isArrowFunctionContext)
             {
             }
 
@@ -146,5 +145,3 @@ namespace JSC {
     };
 
 } // namespace JSC
-
-#endif // EvalCodeCache_h

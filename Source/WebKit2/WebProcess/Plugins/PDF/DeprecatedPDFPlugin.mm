@@ -523,7 +523,7 @@ PDFPlugin::PDFPlugin(WebFrame* frame)
     if (supportsForms()) {
         Document* document = webFrame()->coreFrame()->document();
         m_annotationContainer = document->createElement(divTag, false);
-        m_annotationContainer->setAttribute(idAttr, "annotationContainer");
+        m_annotationContainer->setAttributeWithoutSynchronization(idAttr, AtomicString("annotationContainer", AtomicString::ConstructFromLiteral));
 
         auto annotationStyleElement = document->createElement(styleTag, false);
         annotationStyleElement->setTextContent(annotationStyle, ASSERT_NO_EXCEPTION);
@@ -649,7 +649,7 @@ const PluginView* PDFPlugin::pluginView() const
     return static_cast<const PluginView*>(controller());
 }
 
-PassRefPtr<Scrollbar> PDFPlugin::createScrollbar(ScrollbarOrientation orientation)
+Ref<Scrollbar> PDFPlugin::createScrollbar(ScrollbarOrientation orientation)
 {
     auto widget = Scrollbar::createNativeScrollbar(*this, orientation, RegularScrollbar);
     if (orientation == HorizontalScrollbar) {
@@ -659,14 +659,14 @@ PassRefPtr<Scrollbar> PDFPlugin::createScrollbar(ScrollbarOrientation orientatio
         m_verticalScrollbarLayer = adoptNS([[WKPDFPluginScrollbarLayer alloc] initWithPDFPlugin:this]);
         [m_containerLayer addSublayer:m_verticalScrollbarLayer.get()];
     }
-    didAddScrollbar(widget.get(), orientation);
+    didAddScrollbar(widget.ptr(), orientation);
     if (Frame* frame = webFrame()->coreFrame()) {
         if (Page* page = frame->page()) {
             if (page->expectsWheelEventTriggers())
                 scrollAnimator().setWheelEventTestTrigger(page->testTrigger());
         }
     }
-    pluginView()->frame()->view()->addChild(widget.get());
+    pluginView()->frame()->view()->addChild(widget.ptr());
     return widget;
 }
 

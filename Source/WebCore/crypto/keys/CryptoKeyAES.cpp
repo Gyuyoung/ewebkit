@@ -28,7 +28,6 @@
 
 #if ENABLE(SUBTLE_CRYPTO)
 
-#include "CryptoAlgorithmDescriptionBuilder.h"
 #include "CryptoAlgorithmRegistry.h"
 #include "CryptoKeyDataOctetSequence.h"
 #include <wtf/text/WTFString.h>
@@ -58,15 +57,14 @@ bool CryptoKeyAES::isValidAESAlgorithm(CryptoAlgorithmIdentifier algorithm)
 
 RefPtr<CryptoKeyAES> CryptoKeyAES::generate(CryptoAlgorithmIdentifier algorithm, size_t lengthBits, bool extractable, CryptoKeyUsage usages)
 {
-    if (lengthBits % 8)
+    if ((lengthBits != 128) && (lengthBits != 192) && (lengthBits != 256))
         return nullptr;
     return adoptRef(new CryptoKeyAES(algorithm, randomData(lengthBits / 8), extractable, usages));
 }
 
-void CryptoKeyAES::buildAlgorithmDescription(CryptoAlgorithmDescriptionBuilder& builder) const
+std::unique_ptr<KeyAlgorithm> CryptoKeyAES::buildAlgorithm() const
 {
-    CryptoKey::buildAlgorithmDescription(builder);
-    builder.add("length", m_key.size() * 8);
+    return std::make_unique<AesKeyAlgorithm>(CryptoAlgorithmRegistry::singleton().nameForIdentifier(algorithmIdentifier()), m_key.size() * 8);
 }
 
 std::unique_ptr<CryptoKeyData> CryptoKeyAES::exportData() const

@@ -71,7 +71,7 @@ const AtomicString& IDBCursor::directionPrevUnique()
     return prevunique;
 }
 
-IndexedDB::CursorDirection IDBCursor::stringToDirection(const String& directionString, ExceptionCode& ec)
+Optional<IndexedDB::CursorDirection> IDBCursor::stringToDirection(const String& directionString)
 {
     if (directionString == directionNext())
         return IndexedDB::CursorDirection::Next;
@@ -82,8 +82,7 @@ IndexedDB::CursorDirection IDBCursor::stringToDirection(const String& directionS
     if (directionString == directionPrevUnique())
         return IndexedDB::CursorDirection::PrevNoDuplicate;
 
-    ec = TypeError;
-    return IndexedDB::CursorDirection::Next;
+    return Nullopt;
 }
 
 const AtomicString& IDBCursor::directionToString(IndexedDB::CursorDirection direction)
@@ -107,6 +106,11 @@ const AtomicString& IDBCursor::directionToString(IndexedDB::CursorDirection dire
     }
 }
 
+Ref<IDBCursor> IDBCursor::create(IDBTransaction& transaction, IDBObjectStore& objectStore, const IDBCursorInfo& info)
+{
+    return adoptRef(*new IDBCursor(transaction, objectStore, info));
+}
+
 Ref<IDBCursor> IDBCursor::create(IDBTransaction& transaction, IDBIndex& index, const IDBCursorInfo& info)
 {
     return adoptRef(*new IDBCursor(transaction, index, info));
@@ -117,7 +121,7 @@ IDBCursor::IDBCursor(IDBTransaction& transaction, IDBObjectStore& objectStore, c
     , m_info(info)
     , m_objectStore(&objectStore)
 {
-    ASSERT(currentThread() == effectiveObjectStore().modernTransaction().database().originThreadID());
+    ASSERT(currentThread() == effectiveObjectStore().transaction().database().originThreadID());
 
     suspendIfNeeded();
 }
@@ -127,25 +131,25 @@ IDBCursor::IDBCursor(IDBTransaction& transaction, IDBIndex& index, const IDBCurs
     , m_info(info)
     , m_index(&index)
 {
-    ASSERT(currentThread() == effectiveObjectStore().modernTransaction().database().originThreadID());
+    ASSERT(currentThread() == effectiveObjectStore().transaction().database().originThreadID());
 
     suspendIfNeeded();
 }
 
 IDBCursor::~IDBCursor()
 {
-    ASSERT(currentThread() == effectiveObjectStore().modernTransaction().database().originThreadID());
+    ASSERT(currentThread() == effectiveObjectStore().transaction().database().originThreadID());
 }
 
 bool IDBCursor::sourcesDeleted() const
 {
-    ASSERT(currentThread() == effectiveObjectStore().modernTransaction().database().originThreadID());
+    ASSERT(currentThread() == effectiveObjectStore().transaction().database().originThreadID());
 
     if (m_objectStore)
         return m_objectStore->isDeleted();
 
     ASSERT(m_index);
-    return m_index->isDeleted() || m_index->modernObjectStore().isDeleted();
+    return m_index->isDeleted() || m_index->objectStore().isDeleted();
 }
 
 IDBObjectStore& IDBCursor::effectiveObjectStore() const
@@ -154,189 +158,136 @@ IDBObjectStore& IDBCursor::effectiveObjectStore() const
         return *m_objectStore;
 
     ASSERT(m_index);
-    return m_index->modernObjectStore();
+    return m_index->objectStore();
 }
 
 IDBTransaction& IDBCursor::transaction() const
 {
-    ASSERT(currentThread() == effectiveObjectStore().modernTransaction().database().originThreadID());
-    return effectiveObjectStore().modernTransaction();
+    ASSERT(currentThread() == effectiveObjectStore().transaction().database().originThreadID());
+    return effectiveObjectStore().transaction();
 }
 
 const String& IDBCursor::direction() const
 {
-    ASSERT(currentThread() == effectiveObjectStore().modernTransaction().database().originThreadID());
+    ASSERT(currentThread() == effectiveObjectStore().transaction().database().originThreadID());
     return directionToString(m_info.cursorDirection());
 }
 
-RefPtr<WebCore::IDBRequest> IDBCursor::update(ExecState& exec, JSValue value, ExceptionCodeWithMessage& ec)
+ExceptionOr<Ref<IDBRequest>> IDBCursor::update(ExecState& state, JSValue value)
 {
     LOG(IndexedDB, "IDBCursor::update");
-    ASSERT(currentThread() == effectiveObjectStore().modernTransaction().database().originThreadID());
+    ASSERT(currentThread() == effectiveObjectStore().transaction().database().originThreadID());
 
-    if (sourcesDeleted()) {
-        ec.code = IDBDatabaseException::InvalidStateError;
-        ec.message = ASCIILiteral("Failed to execute 'update' on 'IDBCursor': The cursor's source or effective object store has been deleted.");
-        return nullptr;
-    }
+    if (sourcesDeleted())
+        return Exception { IDBDatabaseException::InvalidStateError, ASCIILiteral("Failed to execute 'update' on 'IDBCursor': The cursor's source or effective object store has been deleted.") };
 
-    if (!transaction().isActive()) {
-        ec.code = IDBDatabaseException::TransactionInactiveError;
-        ec.message = ASCIILiteral("Failed to execute 'update' on 'IDBCursor': The transaction is inactive or finished.");
-        return nullptr;
-    }
+    if (!transaction().isActive())
+        return Exception { IDBDatabaseException::TransactionInactiveError, ASCIILiteral("Failed to execute 'update' on 'IDBCursor': The transaction is inactive or finished.") };
 
-    if (transaction().isReadOnly()) {
-        ec.code = IDBDatabaseException::ReadOnlyError;
-        ec.message = ASCIILiteral("Failed to execute 'update' on 'IDBCursor': The record may not be updated inside a read-only transaction.");
-        return nullptr;
-    }
+    if (transaction().isReadOnly())
+        return Exception { IDBDatabaseException::ReadOnlyError, ASCIILiteral("Failed to execute 'update' on 'IDBCursor': The record may not be updated inside a read-only transaction.") };
 
-    if (!m_gotValue) {
-        ec.code = IDBDatabaseException::InvalidStateError;
-        ec.message = ASCIILiteral("Failed to execute 'update' on 'IDBCursor': The cursor is being iterated or has iterated past its end.");
-        return nullptr;
-    }
+    if (!m_gotValue)
+        return Exception { IDBDatabaseException::InvalidStateError, ASCIILiteral("Failed to execute 'update' on 'IDBCursor': The cursor is being iterated or has iterated past its end.") };
 
-    if (!isKeyCursorWithValue()) {
-        ec.code = IDBDatabaseException::InvalidStateError;
-        ec.message = ASCIILiteral("Failed to execute 'update' on 'IDBCursor': The cursor is a key cursor.");
-        return nullptr;
-    }
+    if (!isKeyCursorWithValue())
+        return Exception { IDBDatabaseException::InvalidStateError, ASCIILiteral("Failed to execute 'update' on 'IDBCursor': The cursor is a key cursor.") };
 
     auto& objectStore = effectiveObjectStore();
-    auto& keyPath = objectStore.info().keyPath();
-    const bool usesInLineKeys = !keyPath.isNull();
+    auto& optionalKeyPath = objectStore.info().keyPath();
+    const bool usesInLineKeys = !!optionalKeyPath;
     if (usesInLineKeys) {
-        RefPtr<IDBKey> keyPathKey = maybeCreateIDBKeyFromScriptValueAndKeyPath(exec, value, keyPath);
+        RefPtr<IDBKey> keyPathKey = maybeCreateIDBKeyFromScriptValueAndKeyPath(state, value, optionalKeyPath.value());
         IDBKeyData keyPathKeyData(keyPathKey.get());
-        if (!keyPathKey || keyPathKeyData != m_currentPrimaryKeyData) {
-            ec.code = IDBDatabaseException::DataError;
-            ec.message = ASCIILiteral("Failed to execute 'update' on 'IDBCursor': The effective object store of this cursor uses in-line keys and evaluating the key path of the value parameter results in a different value than the cursor's effective key.");
-            return nullptr;
-        }
+        if (!keyPathKey || keyPathKeyData != m_currentPrimaryKeyData)
+            return Exception { IDBDatabaseException::DataError, ASCIILiteral("Failed to execute 'update' on 'IDBCursor': The effective object store of this cursor uses in-line keys and evaluating the key path of the value parameter results in a different value than the cursor's effective key.") };
     }
 
-    auto request = effectiveObjectStore().putForCursorUpdate(exec, value, m_currentPrimaryKey.get(), ec);
-    if (ec.code)
-        return nullptr;
+    auto putResult = effectiveObjectStore().putForCursorUpdate(state, value, m_currentPrimaryKey.get());
+    if (putResult.hasException())
+        return putResult.releaseException();
 
-    ASSERT(request);
+    auto request = putResult.releaseReturnValue();
     request->setSource(*this);
     ++m_outstandingRequestCount;
 
-    return request;
+    return WTFMove(request);
 }
 
-void IDBCursor::advance(unsigned count, ExceptionCodeWithMessage& ec)
+ExceptionOr<void> IDBCursor::advance(unsigned count)
 {
     LOG(IndexedDB, "IDBCursor::advance");
-    ASSERT(currentThread() == effectiveObjectStore().modernTransaction().database().originThreadID());
+    ASSERT(currentThread() == effectiveObjectStore().transaction().database().originThreadID());
 
-    if (!m_request) {
-        ec.code = IDBDatabaseException::InvalidStateError;
-        return;
-    }
-    
-    if (!count) {
-        ec.code = TypeError;
-        ec.message = ASCIILiteral("Failed to execute 'advance' on 'IDBCursor': A count argument with value 0 (zero) was supplied, must be greater than 0.");
-        return;
-    }
+    if (!m_request)
+        return Exception { IDBDatabaseException::InvalidStateError };
 
-    if (sourcesDeleted()) {
-        ec.code = IDBDatabaseException::InvalidStateError;
-        ec.message = ASCIILiteral("Failed to execute 'advance' on 'IDBCursor': The cursor's source or effective object store has been deleted.");
-        return;
-    }
+    if (!count)
+        return Exception { TypeError, ASCIILiteral("Failed to execute 'advance' on 'IDBCursor': A count argument with value 0 (zero) was supplied, must be greater than 0.") };
 
-    if (!transaction().isActive()) {
-        ec.code = IDBDatabaseException::TransactionInactiveError;
-        ec.message = ASCIILiteral("Failed to execute 'advance' on 'IDBCursor': The transaction is inactive or finished.");
-        return;
-    }
+    if (sourcesDeleted())
+        return Exception { IDBDatabaseException::InvalidStateError, ASCIILiteral("Failed to execute 'advance' on 'IDBCursor': The cursor's source or effective object store has been deleted.") };
 
-    if (!m_gotValue) {
-        ec.code = IDBDatabaseException::InvalidStateError;
-        ec.message = ASCIILiteral("Failed to execute 'advance' on 'IDBCursor': The cursor is being iterated or has iterated past its end.");
-        return;
-    }
+    if (!transaction().isActive())
+        return Exception { IDBDatabaseException::TransactionInactiveError, ASCIILiteral("Failed to execute 'advance' on 'IDBCursor': The transaction is inactive or finished.") };
+
+    if (!m_gotValue)
+        return Exception { IDBDatabaseException::InvalidStateError, ASCIILiteral("Failed to execute 'advance' on 'IDBCursor': The cursor is being iterated or has iterated past its end.") };
 
     m_gotValue = false;
 
     uncheckedIterateCursor(IDBKeyData(), count);
+
+    return { };
 }
 
-void IDBCursor::continueFunction(ScriptExecutionContext& context, JSValue keyValue, ExceptionCodeWithMessage& ec)
+ExceptionOr<void> IDBCursor::continueFunction(ExecState& execState, JSValue keyValue)
 {
-    auto exec = context.execState();
-    if (!exec) {
-        ec.code = IDBDatabaseException::UnknownError;
-        ec.message = ASCIILiteral("Failed to execute 'continue' on 'IDBCursor': Script execution context does not have an execution state.");
-        return;
-    }
-
     RefPtr<IDBKey> key;
     if (!keyValue.isUndefined())
-        key = scriptValueToIDBKey(*exec, keyValue);
+        key = scriptValueToIDBKey(execState, keyValue);
 
-    continueFunction(key.get(), ec);
+    return continueFunction(key.get());
 }
 
-void IDBCursor::continueFunction(const IDBKeyData& key, ExceptionCodeWithMessage& ec)
+ExceptionOr<void> IDBCursor::continueFunction(const IDBKeyData& key)
 {
     LOG(IndexedDB, "IDBCursor::continueFunction (to key %s)", key.loggingString().utf8().data());
-    ASSERT(currentThread() == effectiveObjectStore().modernTransaction().database().originThreadID());
+    ASSERT(currentThread() == effectiveObjectStore().transaction().database().originThreadID());
 
-    if (!m_request) {
-        ec.code = IDBDatabaseException::InvalidStateError;
-        return;
-    }
+    if (!m_request)
+        return Exception { IDBDatabaseException::InvalidStateError };
 
-    if (sourcesDeleted()) {
-        ec.code = IDBDatabaseException::InvalidStateError;
-        ec.message = ASCIILiteral("Failed to execute 'continue' on 'IDBCursor': The cursor's source or effective object store has been deleted.");
-        return;
-    }
+    if (sourcesDeleted())
+        return Exception { IDBDatabaseException::InvalidStateError, ASCIILiteral("Failed to execute 'continue' on 'IDBCursor': The cursor's source or effective object store has been deleted.") };
 
-    if (!transaction().isActive()) {
-        ec.code = IDBDatabaseException::TransactionInactiveError;
-        ec.message = ASCIILiteral("Failed to execute 'continue' on 'IDBCursor': The transaction is inactive or finished.");
-        return;
-    }
+    if (!transaction().isActive())
+        return Exception { IDBDatabaseException::TransactionInactiveError, ASCIILiteral("Failed to execute 'continue' on 'IDBCursor': The transaction is inactive or finished.") };
 
-    if (!m_gotValue) {
-        ec.code = IDBDatabaseException::InvalidStateError;
-        ec.message = ASCIILiteral("Failed to execute 'continue' on 'IDBCursor': The cursor is being iterated or has iterated past its end.");
-        return;
-    }
+    if (!m_gotValue)
+        return Exception { IDBDatabaseException::InvalidStateError, ASCIILiteral("Failed to execute 'continue' on 'IDBCursor': The cursor is being iterated or has iterated past its end.") };
 
-    if (!key.isNull() && !key.isValid()) {
-        ec.code = IDBDatabaseException::DataError;
-        ec.message = ASCIILiteral("Failed to execute 'continue' on 'IDBCursor': The parameter is not a valid key.");
-        return;
-    }
+    if (!key.isNull() && !key.isValid())
+        return Exception { IDBDatabaseException::DataError, ASCIILiteral("Failed to execute 'continue' on 'IDBCursor': The parameter is not a valid key.") };
 
     if (m_info.isDirectionForward()) {
-        if (!key.isNull() && key.compare(m_currentKeyData) <= 0) {
-            ec.code = IDBDatabaseException::DataError;
-            ec.message = ASCIILiteral("Failed to execute 'continue' on 'IDBCursor': The parameter is less than or equal to this cursor's position.");
-            return;
-        }
-    } else if (!key.isNull() && key.compare(m_currentKeyData) >= 0) {
-        ec.code = IDBDatabaseException::DataError;
-        ec.message = ASCIILiteral("Failed to execute 'continue' on 'IDBCursor': The parameter is greater than or equal to this cursor's position.");
-        return;
+        if (!key.isNull() && key.compare(m_currentKeyData) <= 0)
+            return Exception { IDBDatabaseException::DataError, ASCIILiteral("Failed to execute 'continue' on 'IDBCursor': The parameter is less than or equal to this cursor's position.") };
+    } else {
+        if (!key.isNull() && key.compare(m_currentKeyData) >= 0)
+            return Exception { IDBDatabaseException::DataError, ASCIILiteral("Failed to execute 'continue' on 'IDBCursor': The parameter is greater than or equal to this cursor's position.") };
     }
 
     m_gotValue = false;
 
     uncheckedIterateCursor(key, 0);
+
+    return { };
 }
 
 void IDBCursor::uncheckedIterateCursor(const IDBKeyData& key, unsigned count)
 {
-    ASSERT(currentThread() == effectiveObjectStore().modernTransaction().database().originThreadID());
+    ASSERT(currentThread() == effectiveObjectStore().transaction().database().originThreadID());
 
     ++m_outstandingRequestCount;
 
@@ -344,56 +295,41 @@ void IDBCursor::uncheckedIterateCursor(const IDBKeyData& key, unsigned count)
     transaction().iterateCursor(*this, key, count);
 }
 
-RefPtr<WebCore::IDBRequest> IDBCursor::deleteFunction(ScriptExecutionContext& context, ExceptionCodeWithMessage& ec)
+ExceptionOr<Ref<WebCore::IDBRequest>> IDBCursor::deleteFunction(ExecState& state)
 {
     LOG(IndexedDB, "IDBCursor::deleteFunction");
-    ASSERT(currentThread() == effectiveObjectStore().modernTransaction().database().originThreadID());
+    ASSERT(currentThread() == effectiveObjectStore().transaction().database().originThreadID());
 
-    if (sourcesDeleted()) {
-        ec.code = IDBDatabaseException::InvalidStateError;
-        ec.message = ASCIILiteral("Failed to execute 'delete' on 'IDBCursor': The cursor's source or effective object store has been deleted.");
-        return nullptr;
-    }
+    if (sourcesDeleted())
+        return Exception { IDBDatabaseException::InvalidStateError, ASCIILiteral("Failed to execute 'delete' on 'IDBCursor': The cursor's source or effective object store has been deleted.") };
 
-    if (!transaction().isActive()) {
-        ec.code = IDBDatabaseException::TransactionInactiveError;
-        ec.message = ASCIILiteral("Failed to execute 'delete' on 'IDBCursor': The transaction is inactive or finished.");
-        return nullptr;
-    }
+    if (!transaction().isActive())
+        return Exception { IDBDatabaseException::TransactionInactiveError, ASCIILiteral("Failed to execute 'delete' on 'IDBCursor': The transaction is inactive or finished.") };
 
-    if (transaction().isReadOnly()) {
-        ec.code = IDBDatabaseException::ReadOnlyError;
-        ec.message = ASCIILiteral("Failed to execute 'delete' on 'IDBCursor': The record may not be deleted inside a read-only transaction.");
-        return nullptr;
-    }
+    if (transaction().isReadOnly())
+        return Exception { IDBDatabaseException::ReadOnlyError, ASCIILiteral("Failed to execute 'delete' on 'IDBCursor': The record may not be deleted inside a read-only transaction.") };
 
-    if (!m_gotValue) {
-        ec.code = IDBDatabaseException::InvalidStateError;
-        ec.message = ASCIILiteral("Failed to execute 'delete' on 'IDBCursor': The cursor is being iterated or has iterated past its end.");
-        return nullptr;
-    }
+    if (!m_gotValue)
+        return Exception { IDBDatabaseException::InvalidStateError, ASCIILiteral("Failed to execute 'delete' on 'IDBCursor': The cursor is being iterated or has iterated past its end.") };
 
-    if (!isKeyCursorWithValue()) {
-        ec.code = IDBDatabaseException::InvalidStateError;
-        ec.message = ASCIILiteral("Failed to execute 'delete' on 'IDBCursor': The cursor is a key cursor.");
-        return nullptr;
-    }
+    if (!isKeyCursorWithValue())
+        return Exception { IDBDatabaseException::InvalidStateError, ASCIILiteral("Failed to execute 'delete' on 'IDBCursor': The cursor is a key cursor.") };
 
-    auto request = effectiveObjectStore().modernDelete(context, m_currentPrimaryKey.get(), ec);
-    if (ec.code)
-        return nullptr;
+    auto result = effectiveObjectStore().deleteFunction(state, m_currentPrimaryKey.get());
+    if (result.hasException())
+        return result.releaseException();
 
-    ASSERT(request);
+    auto request = result.releaseReturnValue();
     request->setSource(*this);
     ++m_outstandingRequestCount;
 
-    return request;
+    return WTFMove(request);
 }
 
 void IDBCursor::setGetResult(IDBRequest& request, const IDBGetResult& getResult)
 {
     LOG(IndexedDB, "IDBCursor::setGetResult - current key %s", getResult.keyData().loggingString().substring(0, 100).utf8().data());
-    ASSERT(currentThread() == effectiveObjectStore().modernTransaction().database().originThreadID());
+    ASSERT(currentThread() == effectiveObjectStore().transaction().database().originThreadID());
 
     auto* context = request.scriptExecutionContext();
     if (!context)

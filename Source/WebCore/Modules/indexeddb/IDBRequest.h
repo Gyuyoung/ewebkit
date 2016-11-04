@@ -28,6 +28,7 @@
 #if ENABLE(INDEXED_DATABASE)
 
 #include "EventTarget.h"
+#include "ExceptionOr.h"
 #include "IDBActiveDOMObject.h"
 #include "IDBError.h"
 #include "IDBResourceIdentifier.h"
@@ -56,8 +57,8 @@ class IDBRequest : public EventTargetWithInlineData, public IDBActiveDOMObject, 
 public:
     static Ref<IDBRequest> create(ScriptExecutionContext&, IDBObjectStore&, IDBTransaction&);
     static Ref<IDBRequest> create(ScriptExecutionContext&, IDBCursor&, IDBTransaction&);
-    static Ref<IDBRequest> createCount(ScriptExecutionContext&, IDBIndex&, IDBTransaction&);
-    static Ref<IDBRequest> createGet(ScriptExecutionContext&, IDBIndex&, IndexedDB::IndexRecordType, IDBTransaction&);
+    static Ref<IDBRequest> create(ScriptExecutionContext&, IDBIndex&, IDBTransaction&);
+    static Ref<IDBRequest> createIndexGet(ScriptExecutionContext&, IDBIndex&, IndexedDB::IndexRecordType, IDBTransaction&);
 
     const IDBResourceIdentifier& resourceIdentifier() const { return m_resourceIdentifier; }
 
@@ -66,8 +67,7 @@ public:
     IDBCursor* cursorResult() const { return m_cursorResult.get(); }
     IDBDatabase* databaseResult() const { return m_databaseResult.get(); }
     JSC::JSValue scriptResult() const { return m_scriptResult.get(); }
-    unsigned short errorCode(ExceptionCode&) const;
-    RefPtr<DOMError> error(ExceptionCodeWithMessage&) const;
+    ExceptionOr<DOMError*> error() const;
     IDBObjectStore* objectStoreSource() const { return m_objectStoreSource.get(); }
     IDBIndex* indexSource() const { return m_indexSource.get(); }
     IDBCursor* cursorSource() const { return m_cursorSource.get(); }
@@ -88,6 +88,8 @@ public:
     void requestCompleted(const IDBResultData&);
 
     void setResult(const IDBKeyData&);
+    void setResult(const Vector<IDBKeyData>&);
+    void setResult(const Vector<IDBValue>&);
     void setResult(uint64_t);
     void setResultToStructuredClone(const IDBValue&);
     void setResultToUndefined();

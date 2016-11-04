@@ -18,11 +18,12 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef PrintContext_h
-#define PrintContext_h
+#pragma once
 
 #include <wtf/Forward.h>
+#include <wtf/HashMap.h>
 #include <wtf/Vector.h>
+#include <wtf/text/WTFString.h>
 
 namespace WebCore {
 
@@ -32,6 +33,7 @@ class FloatRect;
 class FloatSize;
 class GraphicsContext;
 class IntRect;
+class Node;
 
 class PrintContext {
 public:
@@ -99,11 +101,13 @@ protected:
 private:
     void computePageRectsWithPageSizeInternal(const FloatSize& pageSizeInPixels, bool allowHorizontalTiling);
     bool beginAndComputePageRectsWithPageSize(Frame&, const FloatSize& pageSizeInPixels);
+    void collectLinkedDestinations(Node&);
+    void outputLinkedDestinations(GraphicsContext&, Node*, const IntRect& pageRect);
 
     // Used to prevent misuses of begin() and end() (e.g., call end without begin).
-    bool m_isPrinting;
+    bool m_isPrinting { false };
+
+    std::unique_ptr<HashMap<String, Ref<Element>>> m_linkedDestinations;
 };
 
-}
-
-#endif
+} // namespace WebCore

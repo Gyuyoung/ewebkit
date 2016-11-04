@@ -24,13 +24,12 @@
 
 #include "JSTestCallbackFunction.h"
 
+#include "JSDOMConvert.h"
 #include "JSDOMStringList.h"
 #include "JSTestNode.h"
 #include "ScriptExecutionContext.h"
 #include "SerializedScriptValue.h"
-#include "URL.h"
 #include <runtime/JSLock.h>
-#include <runtime/JSString.h>
 
 using namespace JSC;
 
@@ -72,7 +71,7 @@ bool JSTestCallbackFunction::callbackWithNoParam()
     ExecState* state = m_data->globalObject()->globalExec();
     MarkedArgumentBuffer args;
 
-    NakedPtr<Exception> returnedException;
+    NakedPtr<JSC::Exception> returnedException;
     UNUSED_PARAM(state);
     m_data->invokeCallback(args, JSCallbackData::CallbackType::Function, Identifier(), returnedException);
     if (returnedException)
@@ -91,9 +90,9 @@ bool JSTestCallbackFunction::callbackWithArrayParam(RefPtr<Float32Array> arrayPa
 
     ExecState* state = m_data->globalObject()->globalExec();
     MarkedArgumentBuffer args;
-    args.append(toJS(state, m_data->globalObject(), arrayParam));
+    args.append(toJS<IDLInterface<Float32Array>>(*state, *m_data->globalObject(), arrayParam));
 
-    NakedPtr<Exception> returnedException;
+    NakedPtr<JSC::Exception> returnedException;
     UNUSED_PARAM(state);
     m_data->invokeCallback(args, JSCallbackData::CallbackType::Function, Identifier(), returnedException);
     if (returnedException)
@@ -112,10 +111,10 @@ bool JSTestCallbackFunction::callbackWithSerializedScriptValueParam(RefPtr<Seria
 
     ExecState* state = m_data->globalObject()->globalExec();
     MarkedArgumentBuffer args;
-    args.append(srzParam ? srzParam->deserialize(state, m_data->globalObject(), 0) : jsNull());
-    args.append(jsStringWithCache(state, strArg));
+    args.append(srzParam ? srzParam->deserialize(*state, m_data->globalObject()) : jsNull());
+    args.append(toJS<IDLDOMString>(*state, strArg));
 
-    NakedPtr<Exception> returnedException;
+    NakedPtr<JSC::Exception> returnedException;
     UNUSED_PARAM(state);
     m_data->invokeCallback(args, JSCallbackData::CallbackType::Function, Identifier(), returnedException);
     if (returnedException)
@@ -123,7 +122,7 @@ bool JSTestCallbackFunction::callbackWithSerializedScriptValueParam(RefPtr<Seria
     return !returnedException;
 }
 
-bool JSTestCallbackFunction::callbackWithStringList(RefPtr<PassRefPtr<DOMStringList>>&& listParam)
+bool JSTestCallbackFunction::callbackWithStringList(DOMStringList* listParam)
 {
     if (!canInvokeCallback())
         return true;
@@ -134,9 +133,9 @@ bool JSTestCallbackFunction::callbackWithStringList(RefPtr<PassRefPtr<DOMStringL
 
     ExecState* state = m_data->globalObject()->globalExec();
     MarkedArgumentBuffer args;
-    args.append(toJS(state, m_data->globalObject(), listParam));
+    args.append(toJS<IDLInterface<DOMStringList>>(*state, *m_data->globalObject(), listParam));
 
-    NakedPtr<Exception> returnedException;
+    NakedPtr<JSC::Exception> returnedException;
     UNUSED_PARAM(state);
     m_data->invokeCallback(args, JSCallbackData::CallbackType::Function, Identifier(), returnedException);
     if (returnedException)
@@ -155,9 +154,9 @@ bool JSTestCallbackFunction::callbackWithBoolean(bool boolParam)
 
     ExecState* state = m_data->globalObject()->globalExec();
     MarkedArgumentBuffer args;
-    args.append(jsBoolean(boolParam));
+    args.append(toJS<IDLBoolean>(boolParam));
 
-    NakedPtr<Exception> returnedException;
+    NakedPtr<JSC::Exception> returnedException;
     UNUSED_PARAM(state);
     m_data->invokeCallback(args, JSCallbackData::CallbackType::Function, Identifier(), returnedException);
     if (returnedException)
@@ -176,10 +175,10 @@ bool JSTestCallbackFunction::callbackRequiresThisToPass(int32_t longParam, TestN
 
     ExecState* state = m_data->globalObject()->globalExec();
     MarkedArgumentBuffer args;
-    args.append(jsNumber(longParam));
-    args.append(toJS(state, m_data->globalObject(), testNodeParam));
+    args.append(toJS<IDLLong>(longParam));
+    args.append(toJS<IDLInterface<TestNode>>(*state, *m_data->globalObject(), testNodeParam));
 
-    NakedPtr<Exception> returnedException;
+    NakedPtr<JSC::Exception> returnedException;
     UNUSED_PARAM(state);
     m_data->invokeCallback(args, JSCallbackData::CallbackType::Function, Identifier(), returnedException);
     if (returnedException)

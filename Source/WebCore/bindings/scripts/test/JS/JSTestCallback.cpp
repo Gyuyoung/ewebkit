@@ -25,14 +25,13 @@
 #include "JSTestCallback.h"
 
 #include "JSDOMConstructor.h"
+#include "JSDOMConvert.h"
 #include "JSDOMStringList.h"
 #include "JSTestNode.h"
 #include "ScriptExecutionContext.h"
 #include "SerializedScriptValue.h"
-#include "URL.h"
-#include <runtime/FunctionPrototype.h>
 #include <runtime/JSLock.h>
-#include <runtime/JSString.h>
+#include <runtime/ObjectPrototype.h>
 
 using namespace JSC;
 
@@ -59,7 +58,7 @@ JSTestCallback::~JSTestCallback()
 #endif
 }
 
-typedef JSDOMConstructorNotConstructable<JSTestCallback> JSTestCallbackConstructor;
+using JSTestCallbackConstructor = JSDOMConstructorNotConstructable<JSTestCallback>;
 
 /* Hash table for constructor */
 
@@ -75,7 +74,7 @@ static_assert(TestCallback::CONSTANT2 == 2, "CONSTANT2 in TestCallback does not 
 template<> JSValue JSTestCallbackConstructor::prototypeForStructure(JSC::VM& vm, const JSDOMGlobalObject& globalObject)
 {
     UNUSED_PARAM(vm);
-    return globalObject.functionPrototype();
+    return globalObject.objectPrototype();
 }
 
 template<> void JSTestCallbackConstructor::initializeProperties(VM& vm, JSDOMGlobalObject& globalObject)
@@ -108,7 +107,7 @@ bool JSTestCallback::callbackWithNoParam()
     ExecState* state = m_data->globalObject()->globalExec();
     MarkedArgumentBuffer args;
 
-    NakedPtr<Exception> returnedException;
+    NakedPtr<JSC::Exception> returnedException;
     m_data->invokeCallback(args, JSCallbackData::CallbackType::Object, Identifier::fromString(state, "callbackWithNoParam"), returnedException);
     if (returnedException)
         reportException(state, returnedException);
@@ -126,9 +125,9 @@ bool JSTestCallback::callbackWithArrayParam(RefPtr<Float32Array> arrayParam)
 
     ExecState* state = m_data->globalObject()->globalExec();
     MarkedArgumentBuffer args;
-    args.append(toJS(state, m_data->globalObject(), arrayParam));
+    args.append(toJS<IDLInterface<Float32Array>>(*state, *m_data->globalObject(), arrayParam));
 
-    NakedPtr<Exception> returnedException;
+    NakedPtr<JSC::Exception> returnedException;
     m_data->invokeCallback(args, JSCallbackData::CallbackType::Object, Identifier::fromString(state, "callbackWithArrayParam"), returnedException);
     if (returnedException)
         reportException(state, returnedException);
@@ -146,17 +145,17 @@ bool JSTestCallback::callbackWithSerializedScriptValueParam(RefPtr<SerializedScr
 
     ExecState* state = m_data->globalObject()->globalExec();
     MarkedArgumentBuffer args;
-    args.append(srzParam ? srzParam->deserialize(state, m_data->globalObject(), 0) : jsNull());
-    args.append(jsStringWithCache(state, strArg));
+    args.append(srzParam ? srzParam->deserialize(*state, m_data->globalObject()) : jsNull());
+    args.append(toJS<IDLDOMString>(*state, strArg));
 
-    NakedPtr<Exception> returnedException;
+    NakedPtr<JSC::Exception> returnedException;
     m_data->invokeCallback(args, JSCallbackData::CallbackType::Object, Identifier::fromString(state, "callbackWithSerializedScriptValueParam"), returnedException);
     if (returnedException)
         reportException(state, returnedException);
     return !returnedException;
 }
 
-bool JSTestCallback::callbackWithStringList(RefPtr<PassRefPtr<DOMStringList>>&& listParam)
+bool JSTestCallback::callbackWithStringList(DOMStringList* listParam)
 {
     if (!canInvokeCallback())
         return true;
@@ -167,9 +166,9 @@ bool JSTestCallback::callbackWithStringList(RefPtr<PassRefPtr<DOMStringList>>&& 
 
     ExecState* state = m_data->globalObject()->globalExec();
     MarkedArgumentBuffer args;
-    args.append(toJS(state, m_data->globalObject(), listParam));
+    args.append(toJS<IDLInterface<DOMStringList>>(*state, *m_data->globalObject(), listParam));
 
-    NakedPtr<Exception> returnedException;
+    NakedPtr<JSC::Exception> returnedException;
     m_data->invokeCallback(args, JSCallbackData::CallbackType::Object, Identifier::fromString(state, "callbackWithStringList"), returnedException);
     if (returnedException)
         reportException(state, returnedException);
@@ -187,9 +186,9 @@ bool JSTestCallback::callbackWithBoolean(bool boolParam)
 
     ExecState* state = m_data->globalObject()->globalExec();
     MarkedArgumentBuffer args;
-    args.append(jsBoolean(boolParam));
+    args.append(toJS<IDLBoolean>(boolParam));
 
-    NakedPtr<Exception> returnedException;
+    NakedPtr<JSC::Exception> returnedException;
     m_data->invokeCallback(args, JSCallbackData::CallbackType::Object, Identifier::fromString(state, "callbackWithBoolean"), returnedException);
     if (returnedException)
         reportException(state, returnedException);
@@ -207,10 +206,10 @@ bool JSTestCallback::callbackRequiresThisToPass(int32_t longParam, TestNode* tes
 
     ExecState* state = m_data->globalObject()->globalExec();
     MarkedArgumentBuffer args;
-    args.append(jsNumber(longParam));
-    args.append(toJS(state, m_data->globalObject(), testNodeParam));
+    args.append(toJS<IDLLong>(longParam));
+    args.append(toJS<IDLInterface<TestNode>>(*state, *m_data->globalObject(), testNodeParam));
 
-    NakedPtr<Exception> returnedException;
+    NakedPtr<JSC::Exception> returnedException;
     m_data->invokeCallback(args, JSCallbackData::CallbackType::Object, Identifier::fromString(state, "callbackRequiresThisToPass"), returnedException);
     if (returnedException)
         reportException(state, returnedException);

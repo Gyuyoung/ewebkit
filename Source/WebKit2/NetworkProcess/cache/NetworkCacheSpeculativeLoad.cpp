@@ -31,6 +31,7 @@
 #include "Logging.h"
 #include "NetworkCache.h"
 #include "NetworkLoad.h"
+#include "NetworkSession.h"
 #include <WebCore/SessionID.h>
 #include <wtf/CurrentTime.h>
 #include <wtf/RunLoop.h>
@@ -55,7 +56,11 @@ SpeculativeLoad::SpeculativeLoad(const GlobalFrameID& frameID, const ResourceReq
     parameters.allowStoredCredentials = AllowStoredCredentials;
     parameters.contentSniffingPolicy = DoNotSniffContent;
     parameters.request = m_originalRequest;
+#if USE(NETWORK_SESSION)
+    m_networkLoad = std::make_unique<NetworkLoad>(*this, WTFMove(parameters), NetworkSession::defaultSession());
+#else
     m_networkLoad = std::make_unique<NetworkLoad>(*this, WTFMove(parameters));
+#endif
 }
 
 SpeculativeLoad::~SpeculativeLoad()

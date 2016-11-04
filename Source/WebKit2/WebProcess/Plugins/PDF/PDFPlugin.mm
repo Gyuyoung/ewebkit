@@ -795,7 +795,7 @@ void PDFPlugin::createPasswordEntryForm()
 
     Document* document = webFrame()->coreFrame()->document();
     m_passwordContainer = document->createElement(divTag, false);
-    m_passwordContainer->setAttribute(idAttr, "passwordContainer");
+    m_passwordContainer->setAttributeWithoutSynchronization(idAttr, AtomicString("passwordContainer", AtomicString::ConstructFromLiteral));
 
     m_passwordField = PDFPluginPasswordField::create(m_pdfLayerController.get(), this);
     m_passwordField->attach(m_passwordContainer.get());
@@ -1592,7 +1592,7 @@ void PDFPlugin::scrollToPoint(IntPoint scrollPoint)
 {
     Frame* frame = pluginView()->frame();
     float scale = frame->page()->pageScaleFactor();
-    scrollPoint.scale(scale, scale);
+    scrollPoint.scale(scale);
     frame->view()->scrollToOffsetWithoutAnimation(scrollPoint);
 }
 

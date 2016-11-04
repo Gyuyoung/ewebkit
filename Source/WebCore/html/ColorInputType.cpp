@@ -38,12 +38,12 @@
 #include "CSSPropertyNames.h"
 #include "Chrome.h"
 #include "Color.h"
+#include "Event.h"
 #include "HTMLDataListElement.h"
 #include "HTMLDivElement.h"
 #include "HTMLInputElement.h"
 #include "HTMLOptionElement.h"
 #include "InputTypeNames.h"
-#include "MouseEvent.h"
 #include "RenderObject.h"
 #include "RenderView.h"
 #include "ScopedEventQueue.h"
@@ -133,7 +133,7 @@ void ColorInputType::setValue(const String& value, bool valueChanged, TextFieldE
         m_chooser->setSelectedColor(valueAsColor());
 }
 
-void ColorInputType::handleDOMActivateEvent(Event* event)
+void ColorInputType::handleDOMActivateEvent(Event& event)
 {
     if (element().isDisabledOrReadOnly() || !element().renderer())
         return;
@@ -148,7 +148,7 @@ void ColorInputType::handleDOMActivateEvent(Event* event)
             m_chooser->reattachColorChooser(valueAsColor());
     }
 
-    event->setDefaultHandled();
+    event.setDefaultHandled();
 }
 
 void ColorInputType::detach()
@@ -222,7 +222,7 @@ Color ColorInputType::currentColor()
 bool ColorInputType::shouldShowSuggestions() const
 {
 #if ENABLE(DATALIST_ELEMENT)
-    return element().fastHasAttribute(listAttr);
+    return element().hasAttributeWithoutSynchronization(listAttr);
 #else
     return false;
 #endif

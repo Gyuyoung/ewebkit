@@ -66,14 +66,8 @@ public:
 #ifdef HAVE_ECORE_X
         XSetExtensionErrorHandler(dummyExtensionErrorHandler);
 
-        if (!ecore_x_init(0)) {
-            // Could not init ecore_x.
-            // PlatformScreenEfl and systemBeep() functions
-            // depend on ecore_x functionality.
-            ecore_shutdown();
-            eina_shutdown();
-            return false;
-        }
+        if (!ecore_x_init(0))
+            EINA_LOG_INFO("ecore_x could not be initialized (ignored)");
 #endif
 
         if (!ecore_evas_init()) {

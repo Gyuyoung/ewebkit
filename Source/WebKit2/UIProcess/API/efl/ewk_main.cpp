@@ -115,11 +115,8 @@ int EwkMain::initialize()
     }
 
 #ifdef HAVE_ECORE_X
-    if (!ecore_x_init(0)) {
-        CRITICAL("could not init ecore_x.");
-        shutdownInitializedEFLModules(EFLModuleInitFailure::EcoreX);
-        return 0;
-    }
+    if (!ecore_x_init(0))
+        INFO("could not init ecore_x.");
 #endif
 
     if (!edje_init()) {

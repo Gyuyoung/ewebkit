@@ -60,11 +60,9 @@ public:
     {
 #if PLATFORM(GTK)
         gtk_init(nullptr, nullptr);
-#elif PLATFORM(EFL)
-#ifdef HAVE_ECORE_X
+#elif PLATFORM(EFL) && HAVE_ECORE_X
         if (!ecore_x_init(0))
-#endif
-            return false;
+            EINA_LOG_INFO("ecore_x could not be initialized (ignored)");
 #endif
 
         return true;

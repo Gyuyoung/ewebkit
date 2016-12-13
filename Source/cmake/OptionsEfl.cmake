@@ -77,6 +77,8 @@ else ()
     set(ENABLE_FTL_DEFAULT OFF)
 endif ()
 
+WEBKIT_OPTION_DEFINE(ENABLE_ECORE_X "Enable Ecore_X specific usage (cursor, bell)" PUBLIC ON)
+
 WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_3D_TRANSFORMS PUBLIC ON)
 WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_ACCESSIBILITY PUBLIC ON)
 WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_ALLINONE_BUILD PUBLIC OFF)
@@ -158,7 +160,6 @@ if (ENABLE_XSLT)
     find_package(LibXslt 1.1.7 REQUIRED)
 endif ()
 
-option(ENABLE_ECORE_X "Enable Ecore_X specific usage (cursor, bell)" ON)
 if (ENABLE_ECORE_X)
     # We need Xext.h to disable Xlib error messages  when running WTR on Xvfb.
     # These errors are dumped on stderr and makes the test driver thinks that
@@ -169,6 +170,7 @@ if (ENABLE_ECORE_X)
     SET_AND_EXPOSE_TO_BUILD(HAVE_ECORE_X 1)
     SET_AND_EXPOSE_TO_BUILD(WTF_PLATFORM_X11 1)
     SET_AND_EXPOSE_TO_BUILD(MOZ_X11 1)
+    set(ENABLE_X11_TARGET ON)
 endif ()
 
 if (ENABLE_ACCESSIBILITY)
@@ -216,7 +218,6 @@ if (ENABLE_NETSCAPE_PLUGIN_API)
 endif ()
 
 if (WTF_OS_UNIX)
-    set(ENABLE_X11_TARGET ON)
     SET_AND_EXPOSE_TO_BUILD(XP_UNIX 1)
 endif (WTF_OS_UNIX)
 

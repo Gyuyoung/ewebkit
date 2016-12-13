@@ -239,7 +239,6 @@ list(APPEND WebCore_LIBRARIES
     ${CAIRO_LIBRARIES}
     ${ECORE_EVAS_LIBRARIES}
     ${ECORE_LIBRARIES}
-    ${ECORE_X_LIBRARIES}
     ${EDJE_LIBRARIES}
     ${EEZE_LIBRARIES}
     ${EINA_LIBRARIES}
@@ -259,9 +258,15 @@ list(APPEND WebCore_LIBRARIES
     ${LIBXSLT_LIBRARIES}
     ${HYPHEN_LIBRARIES}
     ${SQLITE_LIBRARIES}
-    ${X11_X11_LIB}
     ${ZLIB_LIBRARIES}
 )
+
+if (ENABLE_ECORE_X)
+    list(APPEND WebCore_LIBRARIES
+        ${ECORE_X_LIBRARIES}
+        ${X11_X11_LIB}
+    )
+endif ()
 
 list(APPEND WebCore_SYSTEM_INCLUDE_DIRECTORIES
     ${CAIRO_INCLUDE_DIRS}
@@ -322,7 +327,7 @@ else ()
     )
 endif ()
 
-if (NOT USE_EGL AND X11_Xcomposite_FOUND AND X11_Xrender_FOUND)
+if (ENABLE_ECORE_X AND NOT USE_EGL AND X11_Xcomposite_FOUND AND X11_Xrender_FOUND)
     list(APPEND WebCore_LIBRARIES
         ${X11_Xcomposite_LIB}
         ${X11_Xrender_LIB}

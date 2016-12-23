@@ -98,6 +98,7 @@ void WebPageProxy::windowedPluginVisibilityDidChange(bool, uint64_t)
 {
     notImplemented();
 }
+#endif
 
 void WebPageProxy::handleInputMethodKeydown(bool& handled)
 {

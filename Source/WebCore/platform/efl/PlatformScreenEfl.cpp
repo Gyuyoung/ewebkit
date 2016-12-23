@@ -103,11 +103,12 @@ FloatRect screenRect(Widget* widget)
         ecore_x_screen_size_get(ecore_x_default_screen_get(), &width, &height);
     return FloatRect(0, 0, width, height);
 #else
-    if (!widget || !widget->evas())
+    if (!widget || !widget->platformWidget())
         return FloatRect();
 
+    Evas *evas = evas_object_evas_get(widget->platformWidget());
     int x, y, w, h;
-    ecore_evas_screen_geometry_get(ecore_evas_ecore_evas_get(widget->evas()), &x, &y, &w, &h);
+    ecore_evas_screen_geometry_get(ecore_evas_ecore_evas_get(evas), &x, &y, &w, &h);
     return FloatRect(x, y, w, h);
 #endif
 }

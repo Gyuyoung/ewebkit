@@ -361,6 +361,16 @@ set(WEBKIT2_EXTRA_DEPENDENCIES
      forwarding-headersEflForWebKit2
 )
 
+if (${JavaScriptCore_LIBRARY_TYPE} STREQUAL "SHARED")
+    set(WebKit2_LIBS_PRIVATE -l${JavaScriptCore_OUTPUT_NAME})
+else ()
+    set(WebKit2_LIBS_PRIVATE )
+endif()
+
+if (SHARED_CORE)
+    set(WebKit2_LIBS_PRIVATE "${WebKit2_LIBS_PRIVATE} -l${WebCore_OUTPUT_NAME}")
+endif ()
+
 configure_file(efl/ewebkit2.pc.in ${CMAKE_BINARY_DIR}/WebKit2/efl/ewebkit2.pc @ONLY)
 configure_file(efl/ewebkit2-extension.pc.in ${CMAKE_BINARY_DIR}/WebKit2/efl/ewebkit2-extension.pc @ONLY)
 configure_file(efl/EWebKit2Config.cmake.in ${CMAKE_BINARY_DIR}/WebKit2/efl/EWebKit2Config.cmake @ONLY)
@@ -401,6 +411,7 @@ set(EWebKit2_HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_url_response.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_url_scheme_request.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_view.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_view_configuration.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_window_features.h"
 )
 

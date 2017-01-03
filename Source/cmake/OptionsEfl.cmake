@@ -51,6 +51,12 @@ file(MAKE_DIRECTORY ${THEME_BINARY_DIR})
 
 WEBKIT_OPTION_BEGIN()
 
+WEBKIT_OPTION_DEFINE(SINGLE_LIBRARY "Whether to build a single library or split into libewebkit2, libjavascriptcore_efl and libwebcore_efl." PUBLIC OFF)
+if (SINGLE_LIBRARY)
+    set(JavaScriptCore_LIBRARY_TYPE STATIC)
+    set(WebCore_LIBRARY_TYPE STATIC)
+endif ()
+
 WEBKIT_OPTION_DEFINE(USE_LIBHYPHEN "Whether to enable the default automatic hyphenation implementation." PUBLIC ON)
 
 SET_AND_EXPOSE_TO_BUILD(ENABLE_DEVELOPER_MODE ${DEVELOPER_MODE})

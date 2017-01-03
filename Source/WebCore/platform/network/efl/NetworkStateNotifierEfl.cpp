@@ -26,6 +26,7 @@
 
 #include "config.h"
 #include "NetworkStateNotifier.h"
+#if USE(EEZE)
 
 #include "Logging.h"
 #include <Ecore.h>
@@ -195,3 +196,5 @@ NetworkStateNotifier::NetworkStateNotifier()
 }
 
 } // namespace WebCore
+
+#endif // USE(EEZE)

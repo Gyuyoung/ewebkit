@@ -514,6 +514,31 @@ EAPI Eina_Bool ewk_settings_spatial_navigation_enabled_set(Ewk_Settings *setting
  */
 EAPI Eina_Bool ewk_settings_spatial_navigation_enabled_get(const Ewk_Settings *settings);
 
+/**
+ * Changes whether JS console messages should be sent to stdout.
+ *
+ * By default only Web Inspector will receive console messages. If
+ * this setting is enabled, then it will also send to stdout, which is
+ * useful if not using a web inspector.
+ *
+ * @param settings settings object to enable/disable console to stdout.
+ * @param enable @c EINA_TRUE to enable logging to stdout
+ *                @c EINA_FALSE to log only to inspector.
+ *
+ * @return @c EINA_TRUE on success or @c EINA_FALSE on failure
+ */
+EAPI Eina_Bool ewk_settings_console_log_stdout_enabled_set(Ewk_Settings *settings, Eina_Bool enable);
+
+/**
+ * Returns whether JS console messages should also go to stdout.
+ *
+ * @param settings settings object to get whether console logs to stdout.
+ *
+ * @return @c EINA_TRUE if console logs to stdout.
+ *         @c EINA_FALSE if logs only to web inspector.
+ */
+EAPI Eina_Bool ewk_settings_console_log_stdout_enabled_get(const Ewk_Settings *settings);
+
 #ifdef __cplusplus
 }
 #endif

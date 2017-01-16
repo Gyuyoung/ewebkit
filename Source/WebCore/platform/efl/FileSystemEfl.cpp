@@ -34,7 +34,6 @@
 #include "FileSystem.h"
 
 #include <Ecore.h>
-#include <Ecore_File.h>
 #include <Eina.h>
 #include <dirent.h>
 #include <dlfcn.h>

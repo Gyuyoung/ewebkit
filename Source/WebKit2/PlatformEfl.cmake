@@ -287,13 +287,18 @@ list(APPEND WebKit2_SYSTEM_INCLUDE_DIRECTORIES
     ${GSTREAMER_INCLUDE_DIRS}
     ${LIBSOUP_INCLUDE_DIRS}
     ${LIBXML2_INCLUDE_DIR}
-    ${LIBXSLT_INCLUDE_DIRS}
     ${SQLITE_INCLUDE_DIRS}
 )
 
 if (HARFBUZZ_FOUND)
     list(APPEND WebKit2_SYSTEM_INCLUDE_DIRECTORIES
         ${HARFBUZZ_INCLUDE_DIRS}
+    )
+endif ()
+
+if (LIBXSLT_FOUND)
+    list(APPEND WebKit2_SYSTEM_INCLUDE_DIRECTORIES
+        ${LIBXSLT_INCLUDE_DIR}
     )
 endif ()
 
@@ -327,6 +332,12 @@ if (HARFBUZZ_FOUND)
     )
 endif ()
 
+if (LIBXSLT_FOUND)
+    list(APPEND WebKit2_LIBRARIES
+        ${LIBXSLT_LIBRARIES}
+    )
+endif ()
+
 list(APPEND WebProcess_SOURCES
     WebProcess/EntryPoint/unix/WebProcessMain.cpp
 )
@@ -347,10 +358,15 @@ list(APPEND WebProcess_LIBRARIES
     ${EFLDEPS_LIBRARIES}
     ${EVAS_LIBRARIES}
     ${LIBXML2_LIBRARIES}
-    ${LIBXSLT_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${SQLITE_LIBRARIES}
 )
+
+if (LIBXSLT_FOUND)
+    list(APPEND WebProcess_LIBRARIES
+        ${LIBXSLT_LIBRARIES}
+    )
+endif ()
 
 if (ENABLE_ECORE_X)
     list(APPEND WebProcess_LIBRARIES

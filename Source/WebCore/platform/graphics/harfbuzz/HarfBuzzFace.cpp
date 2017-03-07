@@ -29,6 +29,7 @@
  */
 
 #include "config.h"
+#if USE(HARFBUZZ)
 #include "HarfBuzzFace.h"
 
 #include "FontPlatformData.h"
@@ -130,3 +131,5 @@ void HarfBuzzFace::setScriptForVerticalGlyphSubstitution(hb_buffer_t* buffer)
 }
 
 } // namespace WebCore
+
+#endif // USE(HARFBUZZ)

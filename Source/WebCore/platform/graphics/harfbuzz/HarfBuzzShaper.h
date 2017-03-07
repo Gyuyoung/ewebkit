@@ -31,6 +31,7 @@
 #ifndef HarfBuzzShaper_h
 #define HarfBuzzShaper_h
 
+#if USE(HARFBUZZ)
 #include "FloatPoint.h"
 #include "GlyphBuffer.h"
 #include "TextRun.h"
@@ -140,5 +141,7 @@ private:
 };
 
 } // namespace WebCore
+
+#endif // USE(HARFBUZZ)
 
 #endif // HarfBuzzShaper_h

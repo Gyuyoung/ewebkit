@@ -286,8 +286,10 @@ DashArray FontCascade::dashesForIntersectionsWithRect(const TextRun& run, const 
     float deltaX;
     if (codePath(run) != FontCascade::Complex)
         deltaX = getGlyphsAndAdvancesForSimpleText(run, 0, run.length(), glyphBuffer);
+#if USE(HARFBUZZ)
     else
         deltaX = getGlyphsAndAdvancesForComplexText(run, 0, run.length(), glyphBuffer);
+#endif
 
     if (!glyphBuffer.size())
         return DashArray();

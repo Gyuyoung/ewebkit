@@ -285,12 +285,17 @@ list(APPEND WebKit2_SYSTEM_INCLUDE_DIRECTORIES
     ${EVAS_INCLUDE_DIRS}
     ${GLIB_INCLUDE_DIRS}
     ${GSTREAMER_INCLUDE_DIRS}
-    ${HARFBUZZ_INCLUDE_DIRS}
     ${LIBSOUP_INCLUDE_DIRS}
     ${LIBXML2_INCLUDE_DIR}
     ${LIBXSLT_INCLUDE_DIRS}
     ${SQLITE_INCLUDE_DIRS}
 )
+
+if (HARFBUZZ_FOUND)
+    list(APPEND WebKit2_SYSTEM_INCLUDE_DIRECTORIES
+        ${HARFBUZZ_INCLUDE_DIRS}
+    )
+endif ()
 
 list(APPEND WebKit2_LIBRARIES
     ${CAIRO_LIBRARIES}
@@ -308,7 +313,6 @@ list(APPEND WebKit2_LIBRARIES
     ${GLIB_GIO_LIBRARIES}
     ${GLIB_GOBJECT_LIBRARIES}
     ${GLIB_LIBRARIES}
-    ${HARFBUZZ_LIBRARIES}
     ${JPEG_LIBRARIES}
     ${LIBSOUP_LIBRARIES}
     ${LIBXML2_LIBRARIES}
@@ -316,6 +320,12 @@ list(APPEND WebKit2_LIBRARIES
     ${PNG_LIBRARIES}
     ${SQLITE_LIBRARIES}
 )
+
+if (HARFBUZZ_FOUND)
+    list(APPEND WebKit2_LIBRARIES
+        ${HARFBUZZ_LIBRARIES}
+    )
+endif ()
 
 list(APPEND WebProcess_SOURCES
     WebProcess/EntryPoint/unix/WebProcessMain.cpp
@@ -368,6 +378,11 @@ endif()
 
 if (SHARED_CORE)
     set(WebKit2_LIBS_PRIVATE "${WebKit2_LIBS_PRIVATE} -l${WebCore_OUTPUT_NAME}")
+endif ()
+
+set(WebKit2_LIBS_REQUIRED "cairo evas ecore libsoup-2.4 ecore-input")
+if (HARFBUZZ_FOUND)
+  set(WebKit2_LIBS_REQUIRED "${WebKit2_LIBS_REQUIRED} harfbuzz")
 endif ()
 
 configure_file(efl/ewebkit2.pc.in ${CMAKE_BINARY_DIR}/WebKit2/efl/ewebkit2.pc @ONLY)

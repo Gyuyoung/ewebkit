@@ -167,7 +167,9 @@ public:
 #endif
 
 #if USE(FREETYPE)
+#if USE(HARFBUZZ)
     HarfBuzzFace* harfBuzzFace() const;
+#endif
     bool hasCompatibleCharmap() const;
     FcFontSet* fallbacks() const;
 #endif
@@ -248,7 +250,9 @@ private:
 #if USE(FREETYPE)
     RefPtr<FcPattern> m_pattern;
     mutable FcUniquePtr<FcFontSet> m_fallbacks;
+#if USE(HARFBUZZ)
     mutable RefPtr<HarfBuzzFace> m_harfBuzzFace;
+#endif
 #endif
 
     // The values below are common to all ports

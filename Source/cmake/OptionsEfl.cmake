@@ -220,8 +220,14 @@ endif ()
 
 find_package(Freetype2 2.4.2 REQUIRED)
 find_package(GLIB 2.38.0 REQUIRED COMPONENTS ${GLIB_COMPONENTS})
-find_package(HarfBuzz 0.9.2 REQUIRED)
 find_package(LibSoup 2.42.0 REQUIRED)
+
+find_package(HarfBuzz 0.9.2)
+if (HARFBUZZ_FOUND)
+  SET_AND_EXPOSE_TO_BUILD(USE_HARFBUZZ 1)
+else ()
+  SET_AND_EXPOSE_TO_BUILD(USE_HARFBUZZ 0)
+endif ()
 
 if (ENABLE_MEDIA_STREAM OR ENABLE_WEB_RTC)
     find_package(OpenWebRTC REQUIRED)

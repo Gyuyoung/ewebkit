@@ -42,11 +42,16 @@ namespace WebCore {
 
 float FontCascade::getGlyphsAndAdvancesForComplexText(const TextRun& run, unsigned, unsigned, GlyphBuffer& glyphBuffer, ForTextEmphasisOrNot /* forTextEmphasis */) const
 {
+#if USE(HARFBUZZ)
     HarfBuzzShaper shaper(this, run);
     if (!shaper.shape(&glyphBuffer)) {
         LOG_ERROR("Shaper couldn't shape glyphBuffer.");
         return 0;
     }
+#else
+    UNUSED_PARAM(run);
+    UNUSED_PARAM(glyphBuffer);
+#endif
 
     // FIXME: Mac returns an initial advance here.
     return 0;
@@ -64,24 +69,34 @@ bool FontCascade::canExpandAroundIdeographsInComplexText()
 
 float FontCascade::floatWidthForComplexText(const TextRun& run, HashSet<const Font*>*, GlyphOverflow*) const
 {
+#if USE(HARFBUZZ)
     HarfBuzzShaper shaper(this, run);
     if (shaper.shape())
         return shaper.totalWidth();
+#else
+    UNUSED_PARAM(run);
+#endif
     LOG_ERROR("Shaper couldn't shape text run.");
     return 0;
 }
 
 int FontCascade::offsetForPositionForComplexText(const TextRun& run, float x, bool) const
 {
+#if USE(HARFBUZZ)
     HarfBuzzShaper shaper(this, run);
     if (shaper.shape())
         return shaper.offsetForPosition(x);
+#else
+    UNUSED_PARAM(run);
+    UNUSED_PARAM(x);
+#endif
     LOG_ERROR("Shaper couldn't shape text run.");
     return 0;
 }
 
 void FontCascade::adjustSelectionRectForComplexText(const TextRun& run, LayoutRect& selectionRect, unsigned from, unsigned to) const
 {
+#if USE(HARFBUZZ)
     HarfBuzzShaper shaper(this, run);
     if (shaper.shape()) {
         // FIXME: This should mimic Mac port.
@@ -89,6 +104,12 @@ void FontCascade::adjustSelectionRectForComplexText(const TextRun& run, LayoutRe
         selectionRect = LayoutRect(rect);
         return;
     }
+#else
+    UNUSED_PARAM(run);
+    UNUSED_PARAM(selectionRect);
+    UNUSED_PARAM(from);
+    UNUSED_PARAM(to);
+#endif
     LOG_ERROR("Shaper couldn't shape text run.");
 }
 

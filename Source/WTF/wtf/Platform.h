@@ -499,7 +499,9 @@
 #define USE_CAIRO 1
 #define USE_GLIB 1
 #define USE_FREETYPE 1
+#if PLATFORM(GTK)
 #define USE_HARFBUZZ 1
+#endif
 #define USE_SOUP 1
 #endif
 

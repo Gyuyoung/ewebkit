@@ -214,7 +214,9 @@ FontPlatformData& FontPlatformData::operator=(const FontPlatformData& other)
     m_fallbacks = nullptr;
 
     m_scaledFont = other.m_scaledFont;
+#if USE(HARFBUZZ)
     m_harfBuzzFace = other.m_harfBuzzFace;
+#endif
 
     return *this;
 }
@@ -255,6 +257,7 @@ FontPlatformData FontPlatformData::cloneWithSize(const FontPlatformData& source,
     return copy;
 }
 
+#if USE(HARFBUZZ)
 HarfBuzzFace* FontPlatformData::harfBuzzFace() const
 {
     if (!m_harfBuzzFace)
@@ -262,6 +265,7 @@ HarfBuzzFace* FontPlatformData::harfBuzzFace() const
 
     return m_harfBuzzFace.get();
 }
+#endif
 
 FcFontSet* FontPlatformData::fallbacks() const
 {

@@ -285,15 +285,24 @@ list(APPEND WebKit2_SYSTEM_INCLUDE_DIRECTORIES
     ${EVAS_INCLUDE_DIRS}
     ${GLIB_INCLUDE_DIRS}
     ${GSTREAMER_INCLUDE_DIRS}
-    ${HARFBUZZ_INCLUDE_DIRS}
     ${LIBSOUP_INCLUDE_DIRS}
     ${LIBXML2_INCLUDE_DIR}
-    ${LIBXSLT_INCLUDE_DIRS}
     ${SQLITE_INCLUDE_DIRS}
 )
 
+if (HARFBUZZ_FOUND)
+    list(APPEND WebKit2_SYSTEM_INCLUDE_DIRECTORIES
+        ${HARFBUZZ_INCLUDE_DIRS}
+    )
+endif ()
+
+if (LIBXSLT_FOUND)
+    list(APPEND WebKit2_SYSTEM_INCLUDE_DIRECTORIES
+        ${LIBXSLT_INCLUDE_DIR}
+    )
+endif ()
+
 list(APPEND WebKit2_LIBRARIES
-    WTF
     ${CAIRO_LIBRARIES}
     ${CMAKE_DL_LIBS}
     ${ECORE_EVAS_LIBRARIES}
@@ -309,7 +318,6 @@ list(APPEND WebKit2_LIBRARIES
     ${GLIB_GIO_LIBRARIES}
     ${GLIB_GOBJECT_LIBRARIES}
     ${GLIB_LIBRARIES}
-    ${HARFBUZZ_LIBRARIES}
     ${JPEG_LIBRARIES}
     ${LIBSOUP_LIBRARIES}
     ${LIBXML2_LIBRARIES}
@@ -317,6 +325,18 @@ list(APPEND WebKit2_LIBRARIES
     ${PNG_LIBRARIES}
     ${SQLITE_LIBRARIES}
 )
+
+if (HARFBUZZ_FOUND)
+    list(APPEND WebKit2_LIBRARIES
+        ${HARFBUZZ_LIBRARIES}
+    )
+endif ()
+
+if (LIBXSLT_FOUND)
+    list(APPEND WebKit2_LIBRARIES
+        ${LIBXSLT_LIBRARIES}
+    )
+endif ()
 
 list(APPEND WebProcess_SOURCES
     WebProcess/EntryPoint/unix/WebProcessMain.cpp
@@ -338,10 +358,15 @@ list(APPEND WebProcess_LIBRARIES
     ${EFLDEPS_LIBRARIES}
     ${EVAS_LIBRARIES}
     ${LIBXML2_LIBRARIES}
-    ${LIBXSLT_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${SQLITE_LIBRARIES}
 )
+
+if (LIBXSLT_FOUND)
+    list(APPEND WebProcess_LIBRARIES
+        ${LIBXSLT_LIBRARIES}
+    )
+endif ()
 
 if (ENABLE_ECORE_X)
     list(APPEND WebProcess_LIBRARIES
@@ -360,6 +385,21 @@ add_custom_target(forwarding-headersEflForWebKit2
 set(WEBKIT2_EXTRA_DEPENDENCIES
      forwarding-headersEflForWebKit2
 )
+
+if (${JavaScriptCore_LIBRARY_TYPE} STREQUAL "SHARED")
+    set(WebKit2_LIBS_PRIVATE -l${JavaScriptCore_OUTPUT_NAME})
+else ()
+    set(WebKit2_LIBS_PRIVATE )
+endif()
+
+if (SHARED_CORE)
+    set(WebKit2_LIBS_PRIVATE "${WebKit2_LIBS_PRIVATE} -l${WebCore_OUTPUT_NAME}")
+endif ()
+
+set(WebKit2_LIBS_REQUIRED "cairo evas ecore libsoup-2.4 ecore-input")
+if (HARFBUZZ_FOUND)
+  set(WebKit2_LIBS_REQUIRED "${WebKit2_LIBS_REQUIRED} harfbuzz")
+endif ()
 
 configure_file(efl/ewebkit2.pc.in ${CMAKE_BINARY_DIR}/WebKit2/efl/ewebkit2.pc @ONLY)
 configure_file(efl/ewebkit2-extension.pc.in ${CMAKE_BINARY_DIR}/WebKit2/efl/ewebkit2-extension.pc @ONLY)
@@ -401,6 +441,7 @@ set(EWebKit2_HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_url_response.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_url_scheme_request.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_view.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_view_configuration.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/UIProcess/API/efl/ewk_window_features.h"
 )
 
@@ -490,14 +531,16 @@ add_definitions(-DTEST_RESOURCES_DIR=\"${TEST_RESOURCES_DIR}\"
     -DGTEST_HAS_RTTI=0
 )
 
-add_library(ewk2UnitTestUtils
-    ${WEBKIT2_EFL_TEST_DIR}/UnitTestUtils/EWK2UnitTestBase.cpp
-    ${WEBKIT2_EFL_TEST_DIR}/UnitTestUtils/EWK2UnitTestEnvironment.cpp
-    ${WEBKIT2_EFL_TEST_DIR}/UnitTestUtils/EWK2UnitTestMain.cpp
-    ${WEBKIT2_EFL_TEST_DIR}/UnitTestUtils/EWK2UnitTestServer.cpp
-)
+if (ENABLE_API_TESTS)
+    add_library(ewk2UnitTestUtils
+        ${WEBKIT2_EFL_TEST_DIR}/UnitTestUtils/EWK2UnitTestBase.cpp
+        ${WEBKIT2_EFL_TEST_DIR}/UnitTestUtils/EWK2UnitTestEnvironment.cpp
+        ${WEBKIT2_EFL_TEST_DIR}/UnitTestUtils/EWK2UnitTestMain.cpp
+        ${WEBKIT2_EFL_TEST_DIR}/UnitTestUtils/EWK2UnitTestServer.cpp
+    )
 
-target_link_libraries(ewk2UnitTestUtils ${EWK2UnitTests_LIBRARIES})
+    target_link_libraries(ewk2UnitTestUtils ${EWK2UnitTests_LIBRARIES})
+endif ()
 
 # The "ewk" on the test name needs to be suffixed with "2", otherwise it
 # will clash with tests from the WebKit 1 test suite.

@@ -30,6 +30,7 @@
  */
 
 #include "config.h"
+#if USE(HARFBUZZ)
 #include "HarfBuzzFace.h"
 
 #include "CairoUtilities.h"
@@ -219,3 +220,5 @@ GlyphBufferAdvance HarfBuzzShaper::createGlyphBufferAdvance(float width, float h
 }
 
 } // namespace WebCore
+
+#endif // USE(HARFBUZZ)

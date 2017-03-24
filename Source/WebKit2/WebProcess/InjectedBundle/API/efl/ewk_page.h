@@ -54,7 +54,7 @@ struct EwkPageClient {
      * @param page page to be started
      * @param data data of a page client
      */
-    void (*load_started)(EwkPage *page, void *data);
+    void (*load_started)(Ewk_Page *page, void *data);
 
     /**
      * Callbacks to report window object cleared. 
@@ -62,7 +62,7 @@ struct EwkPageClient {
      * @param page page that the JavaScript window object has been cleared
      * @param data data of a page client 
      */
-    void (*window_object_cleared)(EwkPage *page, void *data);
+    void (*window_object_cleared)(Ewk_Page *page, void *data);
 
     /**
      * Callbacks to report load finished.

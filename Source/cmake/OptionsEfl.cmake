@@ -51,6 +51,12 @@ file(MAKE_DIRECTORY ${THEME_BINARY_DIR})
 
 WEBKIT_OPTION_BEGIN()
 
+WEBKIT_OPTION_DEFINE(SINGLE_LIBRARY "Whether to build a single library or split into libewebkit2, libjavascriptcore_efl and libwebcore_efl." PUBLIC OFF)
+if (SINGLE_LIBRARY)
+    set(JavaScriptCore_LIBRARY_TYPE STATIC)
+    set(WebCore_LIBRARY_TYPE STATIC)
+endif ()
+
 WEBKIT_OPTION_DEFINE(USE_LIBHYPHEN "Whether to enable the default automatic hyphenation implementation." PUBLIC ON)
 
 SET_AND_EXPOSE_TO_BUILD(ENABLE_DEVELOPER_MODE ${DEVELOPER_MODE})
@@ -76,6 +82,8 @@ if (WTF_CPU_X86_64)
 else ()
     set(ENABLE_FTL_DEFAULT OFF)
 endif ()
+
+WEBKIT_OPTION_DEFINE(ENABLE_ECORE_X "Enable Ecore_X specific usage (cursor, bell)" PUBLIC ON)
 
 WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_3D_TRANSFORMS PUBLIC ON)
 WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_ACCESSIBILITY PUBLIC ON)
@@ -145,14 +153,19 @@ find_package(JPEG REQUIRED)
 find_package(PNG REQUIRED)
 find_package(Sqlite REQUIRED)
 find_package(Threads REQUIRED)
-find_package(WebP REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(WebP)
+
+if (WEBP_FOUND)
+    SET_AND_EXPOSE_TO_BUILD(USE_WEBP 1)
+else ()
+    SET_AND_EXPOSE_TO_BUILD(USE_WEBP 0)
+endif ()
 
 if (ENABLE_XSLT)
     find_package(LibXslt 1.1.7 REQUIRED)
 endif ()
 
-option(ENABLE_ECORE_X "Enable Ecore_X specific usage (cursor, bell)" ON)
 if (ENABLE_ECORE_X)
     # We need Xext.h to disable Xlib error messages  when running WTR on Xvfb.
     # These errors are dumped on stderr and makes the test driver thinks that
@@ -163,6 +176,7 @@ if (ENABLE_ECORE_X)
     SET_AND_EXPOSE_TO_BUILD(HAVE_ECORE_X 1)
     SET_AND_EXPOSE_TO_BUILD(WTF_PLATFORM_X11 1)
     SET_AND_EXPOSE_TO_BUILD(MOZ_X11 1)
+    set(ENABLE_X11_TARGET ON)
 endif ()
 
 if (ENABLE_ACCESSIBILITY)
@@ -176,11 +190,20 @@ endif ()
 find_package(Ecore ${EFL_REQUIRED_VERSION} COMPONENTS Evas File Input Imf Imf_Evas ${ECORE_ADDITIONAL_COMPONENTS} CONFIG)
 find_package(Edje ${EFL_REQUIRED_VERSION} REQUIRED CONFIG)
 find_package(Eet ${EFL_REQUIRED_VERSION} REQUIRED CONFIG)
-find_package(Eeze ${EFL_REQUIRED_VERSION} REQUIRED CONFIG)
 find_package(Efreet ${EFL_REQUIRED_VERSION} REQUIRED CONFIG)
 find_package(Eina ${EFL_REQUIRED_VERSION} REQUIRED CONFIG)
 find_package(Eo ${EFL_REQUIRED_VERSION} REQUIRED CONFIG)
 find_package(Evas ${EFL_REQUIRED_VERSION} REQUIRED CONFIG)
+
+find_package(Eeze ${EFL_REQUIRED_VERSION} CONFIG)
+if (EEZE_FOUND)
+    SET_AND_EXPOSE_TO_BUILD(USE_EEZE TRUE)
+endif ()
+if (ENABLE_GAMEPAD_DEPRECATED)
+    if (NOT EEZE_FOUND)
+        message(FATAL_ERROR "ENABLE_GAMEPAD_DEPRECATED requires EFL with eeze support.")
+    endif ()
+endif ()
 
 if (ENABLE_GEOLOCATION)
     list(APPEND GLIB_COMPONENTS gio-unix)
@@ -197,8 +220,14 @@ endif ()
 
 find_package(Freetype2 2.4.2 REQUIRED)
 find_package(GLIB 2.38.0 REQUIRED COMPONENTS ${GLIB_COMPONENTS})
-find_package(HarfBuzz 0.9.2 REQUIRED)
 find_package(LibSoup 2.42.0 REQUIRED)
+
+find_package(HarfBuzz 0.9.2)
+if (HARFBUZZ_FOUND)
+  SET_AND_EXPOSE_TO_BUILD(USE_HARFBUZZ 1)
+else ()
+  SET_AND_EXPOSE_TO_BUILD(USE_HARFBUZZ 0)
+endif ()
 
 if (ENABLE_MEDIA_STREAM OR ENABLE_WEB_RTC)
     find_package(OpenWebRTC REQUIRED)
@@ -210,7 +239,6 @@ if (ENABLE_NETSCAPE_PLUGIN_API)
 endif ()
 
 if (WTF_OS_UNIX)
-    set(ENABLE_X11_TARGET ON)
     SET_AND_EXPOSE_TO_BUILD(XP_UNIX 1)
 endif (WTF_OS_UNIX)
 

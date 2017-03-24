@@ -345,6 +345,22 @@ Eina_Bool ewk_settings_spatial_navigation_enabled_get(const Ewk_Settings* settin
     return WKPreferencesGetSpatialNavigationEnabled(settings->preferences());
 }
 
+Eina_Bool ewk_settings_console_log_stdout_enabled_set(Ewk_Settings* settings, Eina_Bool enable)
+{
+    EINA_SAFETY_ON_NULL_RETURN_VAL(settings, false);
+
+    WKPreferencesSetLogsPageMessagesToSystemConsoleEnabled(settings->preferences(), enable);
+
+    return true;
+}
+
+Eina_Bool ewk_settings_console_log_stdout_enabled_get(const Ewk_Settings* settings)
+{
+    EINA_SAFETY_ON_NULL_RETURN_VAL(settings, false);
+
+    return WKPreferencesGetLogsPageMessagesToSystemConsoleEnabled(settings->preferences());
+}
+
 void EwkSettings::setDefaultTextEncodingName(const char* name)
 {
     if (m_defaultTextEncodingName == name)

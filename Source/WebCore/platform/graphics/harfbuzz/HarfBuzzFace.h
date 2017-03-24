@@ -31,6 +31,7 @@
 #ifndef HarfBuzzFace_h
 #define HarfBuzzFace_h
 
+#if USE(HARFBUZZ)
 #include <hb.h>
 
 #include <wtf/HashMap.h>
@@ -71,5 +72,6 @@ private:
 };
 
 }
+#endif // USE(HARFBUZZ)
 
 #endif // HarfBuzzFace_h

@@ -29,6 +29,7 @@
  */
 
 #include "config.h"
+#if USE(HARFBUZZ)
 #include "HarfBuzzShaper.h"
 
 #include "FontCascade.h"
@@ -700,3 +701,5 @@ FloatRect HarfBuzzShaper::selectionRect(const FloatPoint& point, int height, uns
 }
 
 } // namespace WebCore
+
+# endif // USE(HARFBUZZ)
